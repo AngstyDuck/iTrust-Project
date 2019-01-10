@@ -13,7 +13,7 @@ import csv
 
 
 # for i in ["2_LT_001", "2_LT_002", "2_LS_101", "2_LS_201", "2_LS_301", "2_LS_401", "2_LS_501", "2_LS_601"]:
-for j in ["2_MV_006", "2_MV_005", "1_MV_002", "1_MV_004"]:
+for j in ["1_MV_001", "1_MV_002", "1_MV_003", "1_MV_004"]:
     INPUTDIR = "./data/processed/processedWadi.csv"
     COLUMNNAME = j
     NUMOFLINES = 10
