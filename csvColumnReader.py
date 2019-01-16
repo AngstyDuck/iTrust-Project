@@ -14,7 +14,9 @@ NUMOFLINES = 1000
 counter0 = 0
 counter1 = 0
 indexList = {}
-variables = ["2_LT_002_PV"]
+
+variables = ["2_FIT_003_PV"]
+
 
 
 with open(INPUTDIR) as csvfile0:
@@ -35,8 +37,8 @@ with open(INPUTDIR) as csvfile0:
 			if counter0 > NUMOFLINES:
 				break
 			else:
-				print(indexList)
+				print("Key: {0}; Key Value: {1}".format(variables[0], row[indexList[variables[0]]]))
 
-		counter0 += 0
+		counter0 += 1
 
 

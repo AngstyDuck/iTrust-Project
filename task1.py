@@ -4,7 +4,7 @@ Code objective is to print variance of water level in 2_LT_001 when inlet
 and outlet of the tank is closed
 
 Note about dataset:
-- ER2 (2_LT_002) is unused for the entire duration. For water level,
+- ER1 (2_LT_001) is unused for the entire duration. For water level,
 Max Difference: 0.2622999999999962; Mean Difference: 0.0038681211144183853
 Absolute Mean: 70.91059999999999; Absolute mean - min: 0.6424000000000092
 - Consumption tanks (e.g. "2_T_101") have sensors that track it's water level
