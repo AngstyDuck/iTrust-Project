@@ -7,6 +7,7 @@ Second iteration of creation of state values, and checking if they adhere to axi
 import csv
 import numpy as np
 import copy
+from decimal import Decimal
 
 
 
@@ -20,11 +21,11 @@ DIR2_FIT_002 = "./data/processed/2_FIT_002Data.csv"
 DIR2_FIT_003 = "./data/processed/2_FIT_003Data.csv"
 
 DIRPROCESSEDWADI = "./data/processed/processedWadi.csv"
+DIRFR1SPLIT = "./data/processed/FR1SplitData.csv"
 DIRSTATESWADI = "./data/processed/statesWadi2.csv"
 DIRCACHE = "./data/processed/cache.csv"
 
-DIRFR1SPLIT00 = "./data/processed/FR1SplitData00.csv"
-DIRFR1SPLIT01 = "./data/processed/FR1SplitData01.csv"
+DIRSPLIT10 = "./data/processed/splitData10.csv"
 
 
 class Task2:
@@ -38,18 +39,18 @@ class Task2:
 		prevCount = 0
 
 		with open(DIRPROCESSEDWADI) as csvfile0:
-			with open(DIRSTATESWADI, "w+") as csvfile1:
+			with open(DIRFR1SPLIT, "w+") as csvfile1:
 				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
 				spamwriter = csv.writer(csvfile1, delimiter=" ", quotechar="|")
 
 				for row in spamreader:
-					if counter0 == 0 or counter0 - prevCount == 10:
+					if counter0 == 0 or counter0 - prevCount == 60:
 						spamwriter.writerow(row)
 						prevCount = counter0
 						counter2 += 1
 					counter0 += 1
 
-		print("Done. Original size of datapoints: {0}; Reduced size of datapoints: {1}".format(counter0, counter2))
+		print("reduceSize done. Original size of datapoints: {0}; Reduced size of datapoints: {1}".format(counter0, counter2))
 
 	def stateCreation(self):
 		"""
@@ -70,8 +71,8 @@ class Task2:
 		indexList = {}
 
 		# write new rows into cache
-		with open(DIRSTATESWADI) as csvfile0:
-			with open(DIRCACHE, "w+") as csvfile1:
+		with open(DIRFR1SPLIT) as csvfile0:
+			with open(DIRSTATESWADI, "w+") as csvfile1:
 				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
 				spamwriter = csv.writer(csvfile1, delimiter=" ", quotechar="|")
 
@@ -90,18 +91,19 @@ class Task2:
 						spamwriter.writerow(row)
 
 					elif counter0 == 1:
-						prevVal = row[indexList["2_LT_002_PV"]]
+						prevVal = round(float(row[indexList["2_LT_002_PV"]]), 5)
+						spamwriter.writerow(row)
 					else:
 						FR2State = None
 
-						if prevVal > row[indexList["2_LT_002_PV"]]:
+						if round(float(row[indexList["2_LT_002_PV"]]), 5) > prevVal:
 							FR2State = 0
-						elif prevVal == row[indexList["2_LT_002_PV"]]:
+						elif prevVal == round(float(row[indexList["2_LT_002_PV"]]), 5):
 							FR2State = 1
 						else:
 							FR2State = 2
 
-						prevVal = copy.copy(row[indexList["2_LT_002_PV"]])
+						prevVal = copy.copy(round(float(row[indexList["2_LT_002_PV"]]), 5))
 						currentRow = copy.copy(row)
 						currentRow[indexList["2_LT_002_PV"]] = FR2State
 						# print("For counter0: {0}, FR2 state changed to: {1}".format(counter0, currentRow[indexList["2_LT_002_PV"]]))
@@ -109,17 +111,7 @@ class Task2:
 
 					counter0 += 1
 
-		# write cache to replace DIRSTATESWADI
-		print("Writing into file...")
-		with open(DIRCACHE) as csvfile0:
-			with open(DIRSTATESWADI, "w+") as csvfile1:
-				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
-				spamwriter = csv.writer(csvfile1, delimiter=" ", quotechar="|")
-
-				for row in spamreader:
-					spamwriter.writerow(row)
-
-		print("done.")
+		print("stateCreation done.")
 
 
 	def fr1part0Expression(self):
@@ -136,65 +128,122 @@ class Task2:
 		output from water tank: 2_FIT_002, 2_FIT_003
 
 		Result: 
-		All datapoints where 1_MV_003 is open: 32926; 
-		Datapoints when expression is satisfied: 6254 
-		Ratio: 0.18994107999757032
+		When interval between data points == 10:
+		All datapoints where 2_MV_003_STATUS is open: 27567; 
+		Datapoints when expression is satisfied: 17987; 
+		Ratio: 0.6524830413175173
+
+		When interval between data points == 60:
+		All datapoints where 2_MV_003_STATUS is open: 4590; 
+		Datapoints when expression is satisfied: 3744; 
+		Ratio: 0.8156862745098039
+
 
 		"""
 
 		counter0 = 0
 		counter1 = 0
 		counter2 = 0  # all cases where 1_MV_003 is open
-		counter3 = 0  # when expression is satisfied
+		counter3 = 0  # sum of total violating datapoints
+		counter4 = 0  # counting consecutive violations
+		counter5 = 0  # counting length of consecutive violations
 		consecutiveViolation = False
 		variables = ["2_LT_002_PV", "2_MV_003_STATUS", "2_FIT_001_PV", "2_FIT_002_PV", "2_FIT_003_PV"]
 		indexList = {}
+		consecViolationLength = {}
+		consecViolationDisplayList = []
+		consecViolationThresh = 4  # only consider an official violation when there are >[insert number] consecutive violations
 
 		with open(DIRSTATESWADI) as csvfile0:
-			spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
+			with open(DIRFR1SPLIT) as csvfile1:
+				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
+				spamreader1 = csv.reader(csvfile1, delimiter=" ", quotechar="|")
 
-			for row in spamreader:
-				if counter0 == 0:
-					for i in range(len(row)):
-						for j in variables:
-							if j in row[i]:
-								indexList[j] = i
-								counter1 += 1
+				for row in spamreader:
+					anotherRow = spamreader1.__next__()
 
-					if counter1 != len(variables):
-						print("ERROR: Retrieving column index from .csv file")
-						break
-				elif int(row[indexList["2_MV_003_STATUS"]]) == 2:
-					counter2 += 1
+					if counter0 == 0:
+						for i in range(len(row)):
+							for j in variables:
+								if j in row[i]:
+									indexList[j] = i
+									counter1 += 1
 
-					inputWaterTank = float(row[indexList["2_FIT_001_PV"]]) > 0
-					waterLevelRising = float(row[indexList["2_LT_002_PV"]]) == 0
-					outputLessInput = float(row[indexList["2_FIT_002_PV"]]) + float(row[indexList["2_FIT_003_PV"]]) < float(row[indexList["2_FIT_001_PV"]])
-					waterLevelFalling = float(row[indexList["2_LT_002_PV"]]) == 2
-					outputMoreInput = float(row[indexList["2_FIT_002_PV"]]) + float(row[indexList["2_FIT_003_PV"]]) > float(row[indexList["2_FIT_001_PV"]]) > 0
-					waterLevelConst = float(row[indexList["2_LT_002_PV"]]) == 1
-					outputEqlInput = float(row[indexList["2_FIT_002_PV"]]) + float(row[indexList["2_FIT_003_PV"]]) == float(row[indexList["2_FIT_001_PV"]]) > 0
+						if counter1 != len(variables):
+							print("ERROR: Retrieving column index from .csv file")
+							break
+					elif counter0 > 1:
+						if int(row[indexList["2_MV_003_STATUS"]]) == 2:
+							counter2 += 1
 
-					logExpOutput = inputWaterTank and ((waterLevelRising and outputLessInput) or (waterLevelFalling and outputMoreInput) or (waterLevelConst and outputEqlInput))
+							inputWaterTank = round(float(row[indexList["2_FIT_001_PV"]]),5)> 0
+							waterLevelRising = round(float(row[indexList["2_LT_002_PV"]]), 5) == 0
+							outputLessInput = round(float(row[indexList["2_FIT_002_PV"]]), 5) + round(float(row[indexList["2_FIT_003_PV"]]), 5) < round(float(row[indexList["2_FIT_001_PV"]]), 5)
+							waterLevelFalling = round(float(row[indexList["2_LT_002_PV"]]), 5) == 2
+							outputMoreInput = round(float(row[indexList["2_FIT_002_PV"]]), 5) + round(float(row[indexList["2_FIT_003_PV"]]), 5) > round(float(row[indexList["2_FIT_001_PV"]]), 5) > 0
+							waterLevelConst = round(float(row[indexList["2_LT_002_PV"]]), 5) == 1
+							outputEqlInput = round(float(row[indexList["2_FIT_002_PV"]]), 5) + round(float(row[indexList["2_FIT_003_PV"]]), 5) == round(float(row[indexList["2_FIT_001_PV"]]), 5) > 0
+
+							logExpOutput = inputWaterTank and ((waterLevelRising and outputLessInput) or (waterLevelFalling and outputMoreInput) or (waterLevelConst and outputEqlInput))
 
 
-					if logExpOutput:
-						consecutiveViolation = False
-						counter3 += 1
-					else:
-						if consecutiveViolation:
-							print("Consecutive Violation - inputWaterTank: {0}; waterLevelRising: {1}; outputLessInput: {2}; waterLevelFalling: {3}; outputMoreInput: {4}; waterLevelConst: {5}; outputEqlInput: {6}".format(inputWaterTank,waterLevelRising,outputLessInput,waterLevelFalling,outputMoreInput,waterLevelConst,outputEqlInput))
+							if logExpOutput:
+								# --- When expression is obeyed
+								consecutiveViolation = False
+								consecViolationDisplayList.clear()
+
+								# add consecutive violations to dictionary
+								if counter5 not in consecViolationLength.keys():
+									consecViolationLength[counter5] = 1
+								else:
+									consecViolationLength[counter5] += 1
+								counter5 = 0
+								# ----
+
+							else:
+								# --- When expression is not obeyed
+								if consecutiveViolation:
+									counter4 += 1
+									display = "Consecutive Violation - inputWaterTank: {0}; waterLevelRising: {1}; outputLessInput: {2}; waterLevelFalling: {3}; outputMoreInput: {4}; waterLevelConst: {5}; outputEqlInput: {6}\nWater level: {7}; Total Output: {8}; Total Input: {9}; Row: {10}\n".format(inputWaterTank,waterLevelRising,outputLessInput,waterLevelFalling,outputMoreInput,waterLevelConst,outputEqlInput,anotherRow[indexList["2_LT_002_PV"]], float(anotherRow[indexList["2_FIT_002_PV"]]) + float(anotherRow[indexList["2_FIT_003_PV"]]), float(anotherRow[indexList["2_FIT_001_PV"]]), counter0+1)
+									consecViolationDisplayList.append(display)
+									# print(display)
+								else:
+									display = "Non-Consecutive Violation - inputWaterTank: {0}; waterLevelRising: {1}; outputLessInput: {2}; waterLevelFalling: {3}; outputMoreInput: {4}; waterLevelConst: {5}; outputEqlInput: {6}\nWater level: {7}; Total Output: {8}; Total Input: {9}; Row: {10}\n".format(inputWaterTank,waterLevelRising,outputLessInput,waterLevelFalling,outputMoreInput,waterLevelConst,outputEqlInput,anotherRow[indexList["2_LT_002_PV"]], float(anotherRow[indexList["2_FIT_002_PV"]]) + float(anotherRow[indexList["2_FIT_003_PV"]]), float(anotherRow[indexList["2_FIT_001_PV"]]), counter0+1)
+									consecViolationDisplayList.append(display)
+									# print(display)
+									consecutiveViolation = True
+
+								counter5 += 1  # counting length of consecutive violations
+
+								if counter5 == 3:
+									for i in consecViolationDisplayList:
+										print(i)
+									# print("Row number when violations happen 5 times consecutively: {0}".format(counter0+1))  # counter0+1 cos rows start at index 1
 						else:
-							print("Non-consecutive Violation - inputWaterTank: {0}; waterLevelRising: {1}; outputLessInput: {2}; waterLevelFalling: {3}; outputMoreInput: {4}; waterLevelConst: {5}; outputEqlInput: {6}".format(inputWaterTank,waterLevelRising,outputLessInput,waterLevelFalling,outputMoreInput,waterLevelConst,outputEqlInput))
-							consecutiveViolation = True
-						print("\n")
+							# --- When input valve to ER2 is not opened
+							consecutiveViolation = False
+							consecViolationDisplayList.clear()
 
+							# add consecutive violations to dictionary
+							if counter5 not in consecViolationLength.keys():
+								consecViolationLength[counter5] = 1
+							else:
+								consecViolationLength[counter5] += 1
+							counter5 = 0
+							# ----
 
-				counter0 += 1
+					counter0 += 1
 
-			print("All datapoints where 2_MV_003_STATUS is open: {0}; Datapoints when expression is satisfied: {1} Ratio: {2}".format(counter2, counter3, counter3/counter2))
+				print("--- output report ---")
+				# removing consecutive violations that are within acceptable threshold
+				for i in consecViolationLength.keys():
+					if i > consecViolationThresh:
+						counter3 += consecViolationLength[i]
+						print("Violation length: {0}; Violation occurence: {1}".format(i, consecViolationLength[i]))
 
-
+				print("All datapoints where 2_MV_003_STATUS is open: {0}; Datapoints when expression is satisfied: {1}; Ratio: {2}".format(counter2, counter2-counter3, (counter2-counter3)/counter2))
+				print("Number of consecutive violations: {0}".format(counter3))
+				print("--- end ---")
 
 
 
