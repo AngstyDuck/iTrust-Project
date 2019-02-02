@@ -152,7 +152,7 @@ class Task2:
 		indexList = {}
 		consecViolationLength = {}
 		consecViolationDisplayList = []
-		consecViolationThresh = 4  # only consider an official violation when there are >[insert number] consecutive violations
+		consecViolationThresh = 1  # only consider an official violation when there are >[insert number] consecutive violations
 
 		with open(DIRSTATESWADI) as csvfile0:
 			with open(DIRFR1SPLIT) as csvfile1:
