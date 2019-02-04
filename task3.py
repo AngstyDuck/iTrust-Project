@@ -1,3 +1,16 @@
+"""
+Log:
+For some reason in FR7ExpressionVerify the first expression has more violations than the 
+number of data points itself. Please investigate.
+
+
+"""
+
+
+
+
+
+
 # state creation and verify all FRs
 import csv
 import numpy as np
@@ -17,7 +30,9 @@ DIR2_FIT_003 = "./data/processed/2_FIT_003Data.csv"
 DIRPROCESSEDWADI = "./data/processed/processedWadi.csv"
 DIRFR2SPLIT = "./data/processed/FR2SplitData.csv"
 DIRFR6SPLIT = "./data/processed/FR6SplitData.csv"
+DIRFR7SPLIT = "./data/processed/FR7SplitData.csv"
 DIRFR2STATESWADI = "./data/processed/FR2States.csv"
+DIRFR7STATESWADI = "./data/processed/FR7States.csv"
 DIRCACHE = "./data/processed/cache.csv"
 
 
@@ -138,9 +153,13 @@ class Task3:
 					
 	def FR2ExpressionVerify(self):
 		"""
-		Verify expression:
+		Verify expression (there're 2 expressions, each complementary to the other):
+		Expression 1
 		DP2(Is water level rising?) = DP2(Is water level rising?) AND DP8(output < input)) 
 		AND DP8(Is 1_MV_003 open?) AND DP1(Is there input to water tanks?)
+
+		Expression 2
+		DP2(Is water level falling?) = DP2(Is water level falling?) AND DP8(output > input))
 		
 		Note - States for 2_LT_002_PV
 		state: 0 -> Increase
@@ -150,10 +169,16 @@ class Task3:
 		"""
 		counter0 = 0
 		counter1 = 0
-		counter2 = 0  # counts number of data points where ER water level is increasing
-		counter3 = 0  # counts number of data points where logical expression is fulfilled
-		counter4 = 0  # to count consecutive violations
-		violateList = {}
+		counter2 = 0  # counts number of data points where ER water level is increasing for expression 1
+		counter3 = 0  # counts number of data points where logical expression is violated for expression 1
+		counter4 = 0  # to count consecutive violations for expression 1
+		counter5 = 0  # counters number of data points where ER water level is decreasing for expression 2
+		counter6 = 0  # counts number of data points where logical expression is violated for expression 2
+		counter7 = 0  # to count consecutive violations for expression 2
+		consecutiveTresh0 = 15
+		consecutiveTresh1 = 1
+		violateList0 = {}
+		violateList1 = {}
 		indexList = {}
 		variables = ["2_LT_002_PV", "2_MV_003_STATUS", "2_FIT_001_PV", "2_FIT_002_PV", "2_FIT_003_PV"]
 
@@ -173,36 +198,64 @@ class Task3:
 						break
 
 				else:
-					if row[indexList["2_LT_002_PV"]] == '0':
+					if row[indexList["2_LT_002_PV"]] == '0':  # verifying expression 1
 						counter2 += 1
 
-						inputMoreOutput = float(row[indexList["2_FIT_001_PV"]]) >= (float(row[indexList["2_FIT_002_PV"]]) + float(row[indexList["2_FIT_003_PV"]]))
+						inputMoreOutput = float(row[indexList["2_FIT_001_PV"]]) > (float(row[indexList["2_FIT_002_PV"]]) + float(row[indexList["2_FIT_003_PV"]]))
 						valveOpen = float(row[indexList["2_MV_003_STATUS"]]) == 2
 						inputNotZero = float(row[indexList["2_FIT_001_PV"]]) > 0
 						expressionFulfiled = inputMoreOutput and valveOpen and inputNotZero
 
 						if expressionFulfiled:
-							counter3 += 1
 
 							# for counting consecutive violations
-							if counter4 not in violateList.keys():
-								violateList[counter4] = 1
+							if counter4 not in violateList0.keys():
+								violateList0[counter4] = 1
 							else:
-								violateList[counter4] += 1
+								violateList0[counter4] += 1
 							counter4 = 0
 
 						else:
-							print("Wrong datapoint - inputMoreOutput: {0}; valveOpen: {1}; inputNotZero: {2};\nRow: {3};".format(inputMoreOutput, valveOpen, inputNotZero, row))
+							print("Expression 0 wrong datapoint - inputMoreOutput: {0}; valveOpen: {1}; inputNotZero: {2};\nRow: {3};".format(inputMoreOutput, valveOpen, inputNotZero, row))
 
 							# for counting consecutive violations
 							counter4 += 1
 
 						# print("Progress - counter0: {0}; inputMoreOutput: {1}; valveOpen: {2}; inputNotZero: {3};\nRow: {4};".format(counter0, inputMoreOutput, valveOpen, inputNotZero, row))
+					elif row[indexList["2_LT_002_PV"]] == '2':  # verifying expression 2
+						counter5 += 1
+
+						outputMoreInput = float(row[indexList["2_FIT_001_PV"]]) < (float(row[indexList["2_FIT_002_PV"]]) + float(row[indexList["2_FIT_003_PV"]]))
+
+						if outputMoreInput:
+
+							# for counting consecutive violations
+							if counter7 not in violateList1.keys():
+								violateList1[counter7] = 1
+							else:
+								violateList1[counter7] += 1
+							counter7 = 0
+
+						else:
+							# print("Expression 1 wrong datapoint - outputMoreInput: {0};\nRow: {1};".format(outputMoreInput, row))
+
+							# for counting consecutive violations
+							counter7 += 1
 
 				counter0 += 1
+
+			for i in violateList0.keys():
+				if i > consecutiveTresh0:
+					counter3 += violateList0[i]*i
+			for i in violateList1.keys():
+				if i > consecutiveTresh1:
+					counter6 += violateList1[i]*i
 				
-			print("Results\nTotal number of datapoints: {0}; Datapoints that satisfy expression: {1}; Ratio: {2};\nIndexList: {3};".format(counter2, counter3, counter3/counter2, indexList))
-			print("Consecutive violations: {0}".format(violateList))
+			print("Results for expression 1\nTotal number of datapoints: {0}; Datapoints that violate expression: {1}; Ratio: {2};".format(counter2, counter3, counter3/counter2))
+			print("Consecutive violations for expression 1: {0}".format(violateList0))
+			print("Results for expression 2\nTotal number of datapoints: {0}; Datapoints that violate expression: {1}; Ratio: {2};".format(counter5, counter6, counter6/counter5))
+			print("Consecutive violations for expression 2: {0}".format(violateList1))
+			print("indexList: {0}".format(indexList))
 
 	def FR6ExpressionVerify(self):
 		"""
@@ -268,8 +321,158 @@ class Task3:
 			print("Results -\nTotal number of datapoints: {0}; Datapoints that satisfy expression: {1}; Ratio: {2}".format(counter2, counter3, counter3/counter2))
 			print("Consecutive violations: {0}".format(violateList))
 
+	def FR7StateCreate(self):
+		"""
+		Creates state for 2_PIT_002, 2_PIT_003, 2_FIT_002_PV, 2_FIT_003_PV and copies same values for the rest of the columns.
+		state: 0 -> Increase
+		state: 1 -> Constant
+		state: 2 -> Decrease
+
+		"""
+		counter0 = 0
+		counter1 = 0
+		indexList = {}
+		currentRow = []
+		prevRow = None
+		variables = ["2_PIT_002", "2_PIT_003", "2_FIT_002", "2_FIT_003", "2_LT_002"]
+
+		with open(DIRFR7SPLIT) as csvfile0:
+			with open(DIRFR7STATESWADI, "w+") as csvfile1:
+				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
+				spamwriter = csv.writer(csvfile1, delimiter=" ", quotechar="|")
+
+				for row in spamreader:
+					if counter0 == 0:
+						for i in range(len(row)):
+							for j in variables:
+								if j in row[i]:
+									indexList[j] = i
+									counter1 += 1
+
+						if counter1 != len(variables):
+							print("ERROR: Retrieving column index from .csv file, counter1: {0}; len(variables): {1}".format(counter1, len(variables)))
+							break
+
+						for i in variables:
+							currentRow.append(row[indexList[i]])
+						
+						print("Progress: {0}; Writing row: {1}".format(counter0, currentRow))
+						spamwriter.writerow(currentRow)
+						currentRow.clear()
+
+					elif counter0 == 1:
+						prevRow = row
+					else:
+						for i in variables:
+							if row[indexList[i]] > prevRow[indexList[i]]:
+								currentRow.append(0)
+							elif row[indexList[i]] == prevRow[indexList[i]]:
+								currentRow.append(1)
+							else:
+								currentRow.append(2)
+
+						print("Progress: {0}; Writing row: {1}".format(counter0, currentRow))
+						spamwriter.writerow(currentRow)
+						currentRow.clear()
+
+					counter0 += 1
+				print("State creation done.")
+
 	def FR7ExpressionVerify(self):
-		pass
+		"""
+		Verifies 2 logical expressions
+
+		Expression 0
+		DP7(Did pressure of gravity pump decrease?) == DP7(Did pressure of gravity pump decrease?) AND DP8(Gravity pump flow increase?) for booster
+
+		Expression 1
+		DP7(Did pressure of booster pump decrease?) == DP7(Did pressure of booster pump decrease?) AND DP8(Booster pump flow increase?)
+		
+		2_PIT_002 and 2_FIT_002 - Gravity feed
+		2_PIT_003 and 2_FIT_003 - Booster feed
+		"""
+		counter0 = 0
+		counter1 = 0
+		counter2 = 0  # counts number of data points where pressur eof gravity pump is decreasing for expression 1
+		counter3 = 0  # counts number of data points where logical expression is violated for expression 1
+		counter4 = 0  # to count consecutive violations for expression 1
+		counter5 = 0  # counters number of data points where booster pump is decreasing for expression 2
+		counter6 = 0  # counts number of data points where logical expression is violated for expression 2
+		counter7 = 0  # to count consecutive violations for expression 2
+		consecutiveTresh0 = 1
+		consecutiveTresh1 = 1
+		violateList0 = {}
+		violateList1 = {}
+		indexList = {}
+		variables = ["2_PIT_002", "2_PIT_003", "2_FIT_002", "2_FIT_003", "2_LT_002"]
+
+		with open(DIRFR7STATESWADI) as csvfile0:
+			spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
+
+			for row in spamreader:
+				if counter0 == 0:
+					for i in range(len(row)):
+						for j in variables:
+							if j in row[i]:
+								indexList[j] = i
+								counter1 += 1
+
+					if counter1 != len(variables):
+						print("ERROR: Retrieving column index from .csv file, counter1: {0}; len(variables): {1}".format(counter1, len(variables)))
+						break
+					print(indexList)
+
+				else:
+					if float(row[indexList["2_PIT_002"]]) == 2:
+						counter2 += 1
+
+						if float(row[indexList["2_FIT_002"]]) == 0 or float(row[indexList["2_LT_002"]]) == 2:
+							# for counting consecutive violations
+							if counter4 not in violateList0.keys():
+								violateList0[counter4] = 1
+							else:
+								violateList0[counter4] += 1
+							counter4 = 0
+
+						else:
+							# for counting consecutive violations
+							# if float(row[indexList["2_FIT_002"]]) != 1 and float(row[indexList["2_LT_002"]]) != 1:
+							# 	print("Expression 0 violating data point - 2_FIT_002: {0}; 2_LT_002: {1}".format(float(row[indexList["2_FIT_002"]]), float(row[indexList["2_LT_002"]])))
+							# 	counter4 += 1
+							counter4 += 1
+
+					if float(row[indexList["2_PIT_003"]]) == 2:
+						counter5 += 1
+
+						if float(row[indexList["2_FIT_003"]]) == 0:
+							# for counting consecutive violations
+							if counter7 not in violateList0.keys():
+								violateList0[counter7] = 1
+							else:
+								violateList0[counter7] += 1
+							counter7 = 0
+
+						else:
+							# for counting consecutive violations
+							# if float(row[indexList["2_FIT_003"]]) != 1:
+							# 	counter7 += 1
+							counter7 += 1
+
+				counter0 += 1
+
+			for i in violateList0.keys():
+				if i > consecutiveTresh0:
+					counter3 += violateList0[i]*i
+			for i in violateList1.keys():
+				if i > consecutiveTresh1:
+					counter6 += violateList1[i]*i
+				
+			print("Results for expression 1\nTotal number of datapoints: {0}; Datapoints that violate expression: {1}; Ratio: {2};".format(counter2, counter3, counter3/counter2))
+			print("Consecutive violations for expression 1: {0}".format(violateList0))
+			print("Results for expression 2\nTotal number of datapoints: {0}; Datapoints that violate expression: {1}; Ratio: {2};".format(counter5, counter6, counter6/counter5))
+			print("Consecutive violations for expression 2: {0}".format(violateList1))
+			print("indexList: {0}".format(indexList))
+
 
 
 
@@ -283,7 +486,9 @@ class Task3:
 # Task3().FR6ExpressionVerify()
 
 # for testing FR7
-
+Task3().splitData(["2_PIT_002", "2_PIT_003", "2_FIT_002_PV", "2_FIT_003_PV", "2_LT_002"], 60, DIRFR7SPLIT)
+Task3().FR7StateCreate()
+Task3().FR7ExpressionVerify()
 
 
 
