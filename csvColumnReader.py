@@ -7,15 +7,15 @@ Prints [NUMOFLINES] of lines from the .csv file.
 import csv
 
 
-INPUTDIR = "./data/processed/FR2SplitData.csv"
-NUMOFLINES = 1000
+INPUTDIR = "./data/processed/processedWadi.csv"
+NUMOFLINES = 2000
 
 
 counter0 = 0
 counter1 = 0
 indexList = {}
 
-variables = ["2_MV_003_STATUS"]
+variables = ["2_MCV_007"]
 
 
 
