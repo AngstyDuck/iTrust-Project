@@ -7,7 +7,7 @@ Prints [NUMOFLINES] of lines from the .csv file.
 import csv
 
 # INPUTDIR = "./data/processed/2_LT_001DataNoInAndOut.csv"
-INPUTDIR = "./data/processed/processedWadi.csv"
+INPUTDIR = "./data/processed_clean/FR6SplitData.csv"
 NUMOFLINES = 10
 
 

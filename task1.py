@@ -20,10 +20,6 @@ second pumps, act as a backup pump in case 1_P_005 fails.
 diagram display wrongly (venkat didnt say de)
 
 
-
-Tmrw:
-
-
 """
 
 import csv

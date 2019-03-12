@@ -11,25 +11,23 @@ from decimal import Decimal
 
 
 
-DIR2_LT_001 = "./data/processed/2_LT_001Data.csv"
-DIR2_LT_002 = "./data/processed/2_LT_002Data.csv"
-DIR1_P_005 = "./data/processed/1_P_005Data.csv"
-DIR2_FIT_001 = "./data/processed/2_FIT_001Data.csv"
-DIR1_MV_004 = "./data/processed/1_MV_004Data.csv"
-DIR2_FIT_001 = "./data/processed/2_FIT_001Data.csv"
-DIR2_FIT_002 = "./data/processed/2_FIT_002Data.csv"
-DIR2_FIT_003 = "./data/processed/2_FIT_003Data.csv"
+DIR2_LT_001 = "./data/processed_clean/2_LT_001Data.csv"
+DIR2_LT_002 = "./data/processed_clean/2_LT_002Data.csv"
+DIR1_P_005 = "./data/processed_clean/1_P_005Data.csv"
+DIR2_FIT_001 = "./data/processed_clean/2_FIT_001Data.csv"
+DIR1_MV_004 = "./data/processed_clean/1_MV_004Data.csv"
+DIR2_FIT_001 = "./data/processed_clean/2_FIT_001Data.csv"
+DIR2_FIT_002 = "./data/processed_clean/2_FIT_002Data.csv"
+DIR2_FIT_003 = "./data/processed_clean/2_FIT_003Data.csv"
 
-DIRPROCESSEDWADI = "./data/processed/processedWadi.csv"
-DIRFR1SPLIT = "./data/processed/FR1SplitData.csv"
-DIRSTATESWADI = "./data/processed/statesWadi2.csv"
-DIRCACHE = "./data/processed/cache.csv"
-
-DIRSPLIT10 = "./data/processed/splitData10.csv"
+DIRPROCESSEDWADI = "./data/processed_clean/processedWadi.csv"
+DIRFR1SPLIT = "./data/processed_clean/FR1SplitData.csv"
+DIRSTATESWADI = "./data/processed_clean/statesWadi2.csv"
+DIRCACHE = "./data/processed_clean/cache.csv"
 
 
 class Task2:
-	def reduceSize(self):
+	def FR1reduceSize(self):
 		"""
 		Only store one datapoint per 10 datapoints (from processedWadi)
 		"""
@@ -52,7 +50,7 @@ class Task2:
 
 		print("reduceSize done. Original size of datapoints: {0}; Reduced size of datapoints: {1}".format(counter0, counter2))
 
-	def stateCreation(self):
+	def FR1stateCreation(self):
 		"""
 		Replaces statesWadi2 with one where water level of ER2 are states. Compares water level 
 		with previous datapoint to determine if water level is increasing/decreasing/constant. 
@@ -114,7 +112,7 @@ class Task2:
 		print("stateCreation done.")
 
 
-	def fr1part0Expression(self):
+	def FR1part0Expression(self):
 		"""
 		Proves part 0 of the FR1 logic expression
 
@@ -137,7 +135,17 @@ class Task2:
 		All datapoints where 2_MV_003_STATUS is open: 4590; 
 		Datapoints when expression is satisfied: 3744; 
 		Ratio: 0.8156862745098039
-
+		
+		Threshold: 1
+		  All datapoints where 2_MV_003_STATUS is open: 4590; Datapoints when expression is satisfied: 4543; Ratio: 0.989760348583878
+		Threshold: 2
+		  All datapoints where 2_MV_003_STATUS is open: 4590; Datapoints when expression is satisfied: 4578; Ratio: 0.9973856209150327
+		Threshold: 3
+		  All datapoints where 2_MV_003_STATUS is open: 4590; Datapoints when expression is satisfied: 4586; Ratio: 0.9991285403050109
+		Threshold: 4
+		  All datapoints where 2_MV_003_STATUS is open: 4590; Datapoints when expression is satisfied: 4589; Ratio: 0.9997821350762527
+		Threshold: 5
+		  All datapoints where 2_MV_003_STATUS is open: 4590; Datapoints when expression is satisfied: 4590; Ratio: 1.0
 
 		"""
 
@@ -152,7 +160,7 @@ class Task2:
 		indexList = {}
 		consecViolationLength = {}
 		consecViolationDisplayList = []
-		consecViolationThresh = 1  # only consider an official violation when there are >[insert number] consecutive violations
+		consecViolationThresh = 5  # only consider an official violation when there are >[insert number] consecutive violations
 
 		with open(DIRSTATESWADI) as csvfile0:
 			with open(DIRFR1SPLIT) as csvfile1:
@@ -254,9 +262,9 @@ class Task2:
 
 
 task2 = Task2()
-# task2.reduceSize()
-# task2.stateCreation()
-task2.fr1part0Expression()
+# task2.FR1reduceSize()
+# task2.FR1stateCreation()
+# task2.FR1part0Expression()
 
 
 
