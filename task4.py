@@ -476,7 +476,6 @@ class Task4:
 			print("Results -\nTotal number of datapoints: {0}; Datapoints that violate expression: {1}; Ratio: {2}".format(counter2, counter3, counter3/counter2))
 			print("Consecutive violations: {0}".format(violateList))
 
-
 	def FR8ExpressionVerify(self):
 		"""
 		Will be verifying multiple logical expressions.
@@ -683,8 +682,8 @@ class Task4:
 
 
 # for testing FR8
-# Task4().extractDatapoints("10/10/17 17:40:00", "10/10/17 17:49:40", DIRFR8DATATIMESPLIT)
-# Task4().splitData(["2_MV_003", "1_P_005_STATUS", "2_MCV_007", "2_MV_006", "2_P_003_STATUS", "2_MCV_101", "2_MV_101_STATUS", "2_MCV_201", "2_MV_201_STATUS", "2_MCV_301", "2_MV_301_STATUS", "2_MCV_401", "2_MV_401_STATUS", "2_MCV_501", "2_MV_501_STATUS", "2_MCV_601", "2_MV_601_STATUS"], 1, DIRFR8DATATIMESPLIT, DIRFR8SPLIT)
+Task4().extractDatapoints("10/10/17 11:30:40", "10/10/17 11:44:50", DIRFR8DATATIMESPLIT)
+Task4().splitData(["2_MV_003", "1_P_005_STATUS", "2_MCV_007", "2_MV_006", "2_P_003_STATUS", "2_MCV_101", "2_MV_101_STATUS", "2_MCV_201", "2_MV_201_STATUS", "2_MCV_301", "2_MV_301_STATUS", "2_MCV_401", "2_MV_401_STATUS", "2_MCV_501", "2_MV_501_STATUS", "2_MCV_601", "2_MV_601_STATUS"], 1, DIRFR8DATATIMESPLIT, DIRFR8SPLIT)
 Task4().FR8ExpressionVerify()
 
 # for testing FR6
