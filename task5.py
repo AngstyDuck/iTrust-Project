@@ -1,4 +1,18 @@
 """
+Segmented clean data (trained on clean data):
+Number of datapoints that follow expression: 437068, Ratio: 0.9033298128930786
+
+Dirty data (trained on clean data):
+Number of datapoints that follow expression: 172801, Ratio: 0.9999942130299417
+Note:
+850 of the dirty data points are attacked. That only makes up 0.491% of total 
+data points in dirty dataset. Measuring proportion of violating data points 
+shouldn't be our metric, the number of consecutive violating datapoints should be instead.
+
+
+
+
+
 
 Variable: 2_LT_002_PV; 
 	Mean: 75.16463184634425; 
@@ -54,6 +68,7 @@ import copy
 
 
 DIRPROCESSEDWADI = "./data/processed_clean/processedWadi.csv"
+DIRDIRTYPROCESSEDWADI = "./data/processed_dirty/WADI_attackdata_October.csv"
 DIRFR8DATATIMESPLIT = "./data/processed_dirty/FR8dataTimeSplit.csv"
 DIRFR8SPLIT = "./data/processed_clean/FR8SplitData.csv"
 DIRFR8STATESWADI = "./data/processed_clean/FR8States.csv"
@@ -116,7 +131,7 @@ class Task5:
 		indexList = {}
 		variables = ["Date", "Time"]
 
-		with open(DIRPROCESSEDWADI) as csvfile0:
+		with open(DIRDIRTYPROCESSEDWADI) as csvfile0:
 			with open(dir, "w+") as csvfile1:
 				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
 				spamwriter = csv.writer(csvfile1, delimiter=" ", quotechar="|")
@@ -157,7 +172,7 @@ class Task5:
 
 		print("Done. {0} rows added".format(counter2))
 
-	def splitData(self, variables, interval, inputDIR, ouptutDIR):
+	def splitData(self, variables, interval, inputDIR, ouptutDIR, proportion=1.0):
 		"""
 		- var: a list that contains string representations of sensor data names that we want to retain
 		- interval: integer interval between datapoints
@@ -166,10 +181,20 @@ class Task5:
 		counter0 = 0
 		counter1 = 0
 		counter2 = 0  # number of rows added
+		totalRow = 0  # total number of rows in datapoints
+		startRow = 0  # row to start writing data
 		prevVal = 0
 		indexList = {}
 		currentRow = []
 
+		# count total rows
+		with open(inputDIR) as csvfile0:
+			spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
+
+			for row in spamreader:
+				totalRow += 1
+
+			startRow = totalRow - (totalRow*proportion)
 
 		with open(inputDIR) as csvfile0:
 			with open(ouptutDIR, "w+") as csvfile1:
@@ -185,7 +210,6 @@ class Task5:
 								if j in row[i]:
 									indexList[j] = i
 									counter1 += 1
-									print(row[i])
 
 						if counter1 != len(variables):
 							print("ERROR: Retrieving column index from .csv file. \nNumber of variables provided: {0}; Number of variables found: {1}".format(len(variables), counter1))
@@ -195,11 +219,10 @@ class Task5:
 						for i in variables:
 							currentRow.append(row[indexList[i]])
 
-						print("Reading row {0}; writing: {1}".format(counter0, currentRow))
 						spamwriter.writerow(currentRow)
 						currentRow.clear()
 
-					elif counter0 - prevVal == interval:
+					elif counter0 - prevVal >= interval and counter0 >= startRow:
 						for i in variables:
 							currentRow.append(row[indexList[i]])
 
@@ -211,16 +234,22 @@ class Task5:
 						currentRow.clear()
 
 					counter0 += 1
+					print("counter0: {0}, counter0-prevVal: {1}, startRow: {2}".format(counter0,counter0-prevVal, startRow))
 
-				print("Done. Total read rows: {0}; Total written rows: {1}".format(counter0, counter2))
+				print("Done. Total read rows: {0}; Total written rows: {1}; Proportion: {2}".format(counter0, counter2, proportion))
 				print(variables)
 
-	def calStats(self, variables):
+	def calStats(self, variables, proportion=1.0):
 		"""
 		Calculate mean and std dev for each variable
+
+		proportion: proportion of datapoints that will be used to calculate the statistics. We'll be using the
+		first portion of the data points for calculation.
 		"""
 		counter0 = 0
 		counter1 = 0
+		totalRow = 0  # total number of rows in the csv file
+		endRow = 0  # row to end calculation
 		indexList = {}
 		counterDict = {}
 		statsDict = {}
@@ -228,6 +257,15 @@ class Task5:
 		for i in variables:
 			statsDict[i] = [0,0,0,9999999]  # [mean, standard deviation, max, min]
 			counterDict[i] = [0,0,0,0]   # [sum of all, sum of (difference with mean)^2]
+
+		# calculate total number of rows
+		with open(DIRPROCESSEDWADI) as csvfile0:
+			spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
+
+			for row in spamreader:
+				totalRow += 1
+
+			endRow = int(totalRow * proportion)  # rounded down
 
 		# calculate mean, max, and min
 		print("Calculating mean, max and min...")
@@ -245,7 +283,7 @@ class Task5:
 					if counter1 != len(variables):
 						print("ERROR: Retrieving column index from .csv file")
 						break
-				else:
+				elif counter0 <= endRow:
 					for i in variables:
 						counterDict[i][0] += float(row[indexList[i]])
 
@@ -254,6 +292,8 @@ class Task5:
 							statsDict[i][2] = float(row[indexList[i]])
 						if float(row[indexList[i]]) < statsDict[i][3]:
 							statsDict[i][3] = float(row[indexList[i]])
+				else:
+					break
 
 				counter0 += 1
 		for i in variables:
@@ -268,13 +308,20 @@ class Task5:
 			counter0 = 0
 			for row in spamreader:
 				if counter0 != 0:
-					for i in variables:
-						counterDict[i][1] += (float(row[indexList[i]]) - statsDict[i][0])**2
+					if counter0 <= endRow:
+						for i in variables:
+							counterDict[i][1] += (float(row[indexList[i]]) - statsDict[i][0])**2
+					else:
+						# where counter0 > endRow
+						break
+				else:
+					# where counter0 == 0
+					pass
 				
 				counter0 += 1
+
 		for i in variables:
 			statsDict[i][1] = (counterDict[i][1]/counter0)**0.5
-
 
 		for i in variables:
 			print("Variable:{0};Mean:{1};Standard Deviation:{2};Max:{3};Min:{4};".format(i, statsDict[i][0], statsDict[i][1], statsDict[i][2], statsDict[i][3]))
@@ -382,9 +429,11 @@ class Task5:
 			print("Done. Number of datapoints that follow expression: {0}, Ratio: {1}".format(counter2, counter2/counter0))
 
 # for testing FR8
-Task5().extractDatapoints("10/10/17 11:30:40", "10/10/17 11:44:50", DIRFR8DATATIMESPLIT)
-stats = Task5().calStats(["2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"])
-Task5().splitData(["2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, DIRFR8DATATIMESPLIT, DIRFR8SPLIT)
+proportionForTraining = 0.6
+proportionForTesting = 1
+# Task5().extractDatapoints("10/10/17 11:30:40", "10/10/17 11:44:50", DIRFR8DATATIMESPLIT)
+stats = Task5().calStats(["2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
+Task5().splitData(["2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, DIRDIRTYPROCESSEDWADI, DIRFR8SPLIT, proportion=proportionForTesting)
 Task5().FR8stateCreation(DIRFR8SPLIT, stats)
 Task5().FR8ExpressionVerify()
 

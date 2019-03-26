@@ -672,7 +672,7 @@ class Task4:
 			for i in range(8):
 				print("Expression {0} - Total: {1}; Violate: {2}; Violate ratio: {3};".format(i, totalCounter[i], violateCounter[i], violateCounter[i]/totalCounter[i]))
 
-# Task4().csvCreate()
+Task4().csvCreate()
 # Task4().FR1reduceSize()
 # Task4().FR1stateCreation()
 # Task4().FR1part0Expression()
@@ -682,9 +682,9 @@ class Task4:
 
 
 # for testing FR8
-Task4().extractDatapoints("10/10/17 11:30:40", "10/10/17 11:44:50", DIRFR8DATATIMESPLIT)
-Task4().splitData(["2_MV_003", "1_P_005_STATUS", "2_MCV_007", "2_MV_006", "2_P_003_STATUS", "2_MCV_101", "2_MV_101_STATUS", "2_MCV_201", "2_MV_201_STATUS", "2_MCV_301", "2_MV_301_STATUS", "2_MCV_401", "2_MV_401_STATUS", "2_MCV_501", "2_MV_501_STATUS", "2_MCV_601", "2_MV_601_STATUS"], 1, DIRFR8DATATIMESPLIT, DIRFR8SPLIT)
-Task4().FR8ExpressionVerify()
+# Task4().extractDatapoints("10/10/17 11:30:40", "10/10/17 11:44:50", DIRFR8DATATIMESPLIT)
+# Task4().splitData(["2_MV_003", "1_P_005_STATUS", "2_MCV_007", "2_MV_006", "2_P_003_STATUS", "2_MCV_101", "2_MV_101_STATUS", "2_MCV_201", "2_MV_201_STATUS", "2_MCV_301", "2_MV_301_STATUS", "2_MCV_401", "2_MV_401_STATUS", "2_MCV_501", "2_MV_501_STATUS", "2_MCV_601", "2_MV_601_STATUS"], 1, DIRFR8DATATIMESPLIT, DIRFR8SPLIT)
+# Task4().FR8ExpressionVerify()
 
 # for testing FR6
 # Task4().extractDatapoints(DIRFR6DATATIMESPLIT)
