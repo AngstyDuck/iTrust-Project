@@ -979,7 +979,7 @@ class Task5:
 # stats = Task5().calStats(["2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
 # Task5().splitData(["Date", "Time", "2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, DIRDIRTYPROCESSEDWADI, DIRFR8SPLIT, proportion=proportionForTesting)
 # Task5().FR8stateCreation(DIRFR8SPLIT, stats)
-# Task5().FR8ExpressionVerify()
+# Task5().FR8ExpressionVerify() 
 
 # To create squashed results and test them
 # Task5().returnList(DIRFR8RESULT, DIRFR8RESULTSQUASHED)  # create squashed results and produce ratio
