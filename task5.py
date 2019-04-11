@@ -1,10 +1,9 @@
 """
-To do: 
-- PROBLEM (9/4/19) - GraphCreateResult squashes until almost all datapoint == 1 is gone
---- consider double checking if any rounding down occured
---- consider increasing total number of datapoints to be 10000 instead
-- Display dirty data on graph, noting times where attacks happen. Overlay results of 
-logical expression for each FRs where it turns up true/false
+To do: (11/4/19)
+- Segment out datapoints between start of attack indicator 12 to end of attack indicator 15 and plot graph
+- Count number of true and false positives. (true positives is where attack is supposed to happen for either the FR itself, or the FRs that are related to that FR)
+--- If computer can't handle the number of data, slice out datapoints from attack to reduce number of datapoints during attack so that total number of datapoints is smth matplotlib can handle
+- Write description (min 300 words) detailing creation and validation of FRs by this saturday 13/4/19
 
 
 Note:
@@ -296,6 +295,7 @@ class Task5:
 		indexList = {}
 		currentRow = []
 
+
 		# count total rows
 		with open(inputDIR) as csvfile0:
 			spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
@@ -304,6 +304,7 @@ class Task5:
 				totalRow += 1
 
 			startRow = totalRow - (totalRow*proportion)
+
 
 		with open(inputDIR) as csvfile0:
 			with open(ouptutDIR, "w+") as csvfile1:
@@ -988,6 +989,7 @@ class Task5:
 # Task5().returnList(DIRGRAPHRESULT, DIRGRAPHRESULTSQUASHED)
 
 # To show graph
-fr_result_dir = {"FR1":DIRFR1RESULTSQUASHED, "FR8":DIRFR8RESULTSQUASHED}
+fr_result_dir = {"FR1":DIRFR1RESULTSQUASHED}
+# fr_result_dir = {}
 testResult = Task5().GraphTest(DIRGRAPHRESULTSQUASHED, fr_result_dir)
-Task5().GraphRead(DIRGRAPHRESULTSQUASHED, fr_result_dir, testResult)
+Task5().GraphRead(DIRGRAPHRESULTSQUASHED, fr_result_dir, True)
