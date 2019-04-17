@@ -3,7 +3,6 @@ To do: (11/4/19)
 - Segment out datapoints between start of attack indicator 12 to end of attack indicator 15 and plot graph
 - Count number of true and false positives. (true positives is where attack is supposed to happen for either the FR itself, or the FRs that are related to that FR)
 --- If computer can't handle the number of data, slice out datapoints from attack to reduce number of datapoints during attack so that total number of datapoints is smth matplotlib can handle
-- Write description (min 300 words) detailing creation and validation of FRs by this saturday 13/4/19
 
 
 Note:
@@ -129,39 +128,6 @@ matplotlib.use("Qt5Agg")  # specify backend for matplotlib
 import matplotlib.pyplot as plt
 
 
-DIRPROCESSEDWADI = "./data/processed_clean/processedWadi.csv"
-DIRDIRTYPROCESSEDWADI = "./data/processed_dirty/WADI_attackdata_October.csv"
-
-DIRFR1DATATIMESPLIT = "./data/misc/FR1dataTimeSplit.csv"
-DIRFR1SPLIT = "./data/misc/FR1SplitData.csv"
-DIRFR1STATESWADI = "./data/misc/FR1States.csv"
-DIRFR1RESULT = "./data/misc/FR1Result.csv"
-DIRFR1RESULTSQUASHED = "./data/misc/FR1ResultSquashed.csv"
-
-DIRFR8DATATIMESPLIT = "./data/misc/FR8dataTimeSplit.csv"
-DIRFR8SPLIT = "./data/misc/FR8SplitData.csv"
-DIRFR8STATESWADI = "./data/misc/FR8States.csv"
-DIRFR8RESULT = "./data/misc/FR8Result.csv"
-DIRFR8RESULTSQUASHED = "./data/misc/FR8ResultSQUASHED.csv"
-
-DIRGRAPHRESULT = "./data/misc/GraphResult.csv"  # for dirty data
-DIRGRAPHRESULTSQUASHED = "./data/misc/GraphResultSquashed.csv"
-
-ATTACKTIMING = [["9/10/17 19:25:00", "9/10/17 19:50:16"],
-				["10/10/17 10:24:10", "10/10/17 10:34:00"],
-				["10/10/17 10:55:00", "10/10/17 11:24:00"],
-				["10/10/17 11:30:40", "10/10/17 11:44:50"],
-				["10/10/17 13:39:30", "10/10/17 13:50:40"],
-				["10/10/17 14:48:17", "10/10/17 14:59:55"],
-				["10/10/17 17:40:00", "10/10/17 17:49:40"],
-				["10/10/17 10:55:00", "10/10/17 10:56:27"],
-				["11/10/17 11:17:54", "11/10/17 11:31:20"],
-				["11/10/17 11:36:31", "11/10/17 11:47:00"],
-				["11/10/17 11:59:00", "11/10/17 12:05:00"],
-				["11/10/17 12:07:30", "11/10/17 12:10:52"],
-				["11/10/17 12:16:00", "11/10/17 12:25:36"],
-				["11/10/17 15:26:30", "11/10/17 15:37:00"],]
-
 
 class Task5:
 
@@ -220,7 +186,7 @@ class Task5:
 		return (inp[0][1]+"/"+inp[0][0]+"/2017", ":".join(inp[1]), amORpm)
 
 
-	def extractDatapoints(self, startTime, endTime, dir):
+	def extractDatapoints(self, input_dir, output_dir, startTime, endTime):
 		"""
 		UPDATED: 1/4/19
 		"""
@@ -236,8 +202,8 @@ class Task5:
 		indexList = {}
 		variables = ["Date", "Time"]
 
-		with open(DIRDIRTYPROCESSEDWADI) as csvfile0:
-			with open(dir, "w+") as csvfile1:
+		with open(input_dir) as csvfile0:
+			with open(output_dir, "w+") as csvfile1:
 				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
 				spamwriter = csv.writer(csvfile1, delimiter=" ", quotechar="|")
 
@@ -278,7 +244,7 @@ class Task5:
 		print("Done. {0} rows added".format(counter2))
 
 
-	def splitData(self, variables, interval, inputDIR, ouptutDIR, proportion=1.0):
+	def splitData(self, input_dir, output_dir, variables, interval, proportion=1.0):
 		"""
 		UPDATED: 1/4/19
 
@@ -297,7 +263,7 @@ class Task5:
 
 
 		# count total rows
-		with open(inputDIR) as csvfile0:
+		with open(input_dir) as csvfile0:
 			spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
 
 			for row in spamreader:
@@ -306,8 +272,8 @@ class Task5:
 			startRow = totalRow - (totalRow*proportion)
 
 
-		with open(inputDIR) as csvfile0:
-			with open(ouptutDIR, "w+") as csvfile1:
+		with open(input_dir) as csvfile0:
+			with open(output_dir, "w+") as csvfile1:
 				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
 				spamwriter = csv.writer(csvfile1, delimiter=" ", quotechar="|")
 
@@ -350,7 +316,7 @@ class Task5:
 				print(variables)
 
 
-	def calStats(self, variables, proportion=1.0):
+	def calStats(self, input_dir, variables, proportion=1.0):
 		"""
 		UPDATED: 1/4/19
 
@@ -375,7 +341,7 @@ class Task5:
 			counterDict[i] = [0,0,0,0]   # [sum of all, sum of (difference with mean)^2]
 
 		# calculate total number of rows
-		with open(DIRPROCESSEDWADI) as csvfile0:
+		with open(input_dir) as csvfile0:
 			spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
 
 			for row in spamreader:
@@ -385,7 +351,7 @@ class Task5:
 
 		# calculate mean, max, and min
 		print("Calculating mean, max and min...")
-		with open(DIRPROCESSEDWADI) as csvfile0:
+		with open(input_dir) as csvfile0:
 			spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
 
 			for row in spamreader:
@@ -418,7 +384,7 @@ class Task5:
 
 		# calculate standard deviation
 		print("Calculating standard deviation...")
-		with open(DIRPROCESSEDWADI) as csvfile0:
+		with open(input_dir) as csvfile0:
 			spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
 
 			counter0 = 0
@@ -466,7 +432,7 @@ class Task5:
 		return indexList
 
 
-	def ResultReader(self, inp_dir):
+	def ResultReader(self, input_dir):
 		"""
 		Reads csv file of all results, prints out number of datapoints that follow/dont follow
 		"""
@@ -477,7 +443,7 @@ class Task5:
 		variables = ["Date", "Time", "Output"]
 
 
-		with open(inp_dir) as csvfile0:
+		with open(input_dir) as csvfile0:
 			spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
 
 			for row in spamreader:
@@ -499,7 +465,7 @@ class Task5:
 			print("ResultReader: Number of datapoints that follow logical expression: {0}, Ratio: {1}".format(counter2, counter2/counter0))
 
 
-	def returnList(self, input_dir, output_dir, compress_length=1000):
+	def returnList(self, input_dir, output_dir, compress_length=None):
 			"""
 			UPDATED: 3/4/19
 			
@@ -528,9 +494,13 @@ class Task5:
 				for row in spamreader:
 					file_length += 1
 
-			bucketSize = int(file_length/compress_length)
-			# numberOfBuckets = file_length//bucketSize
-			numberOfBuckets = compress_length  # note that ^^ the numberOfBuckets initially turned out to be more than compress_length, so expect some inaccuracies from the missing datapoints
+			if compress_length == None:
+				bucketSize = 1
+				numberOfBuckets = file_length
+			else:
+				bucketSize = int(file_length/compress_length)
+				# numberOfBuckets = file_length//bucketSize
+				numberOfBuckets = compress_length  # note that ^^ the numberOfBuckets initially turned out to be more than compress_length, so expect some inaccuracies from the missing datapoints
 
 			with open(input_dir) as csvfile0:
 				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
@@ -577,7 +547,7 @@ class Task5:
 			print("testCounter: {0}".format(testCounter))
 
 
-	def FR1stateCreation(self, inp, statsDict):
+	def FR1stateCreation(self, input_dir, output_dir, statsDict):
 		"""
 		UPDATED: 1/4/19
 
@@ -589,8 +559,8 @@ class Task5:
 		variables = ["Date", "Time", "1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"]
 
 
-		with open(inp) as csvfile0:
-			with open(DIRFR1STATESWADI, "w+") as csvfile1:
+		with open(input_dir) as csvfile0:
+			with open(output_dir, "w+") as csvfile1:
 				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
 				spamwriter = csv.writer(csvfile1, delimiter=" ", quotechar="|")
 
@@ -632,7 +602,7 @@ class Task5:
 				print("state creation done")
 
 
-	def FR1ExpressionVerify(self):
+	def FR1ExpressionVerify(self, input_dir, output_dir):
 		"""
 		UPDATED: 1/4/19		
 
@@ -649,8 +619,8 @@ class Task5:
 		variables = ["Date", "Time", "1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601", "water_pump_state", "water_level_state", "mcv_state"]
 		output_variables = ["Date", "Time", "Output"]
 
-		with open(DIRFR1STATESWADI) as csvfile0:
-			with open(DIRFR1RESULT, "w+") as csvfile1:
+		with open(input_dir) as csvfile0:
+			with open(output_dir, "w+") as csvfile1:
 				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
 				spamwriter = csv.writer(csvfile1, delimiter=" ", quotechar="|")
 
@@ -671,7 +641,7 @@ class Task5:
 				print("Done. Number of datapoints that follow expression: {0}, Ratio: {1}".format(counter2, counter2/counter0))
 
 
-	def FR8stateCreation(self, inp, statsDict):
+	def FR8stateCreation(self, input_dir, output_dir, statsDict):
 		"""
 		UPDATED: 1/4/19
 		"""
@@ -682,8 +652,8 @@ class Task5:
 		indexList = {}
 		variables = ["Date", "Time", "2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"]
 
-		with open(inp) as csvfile0:
-			with open(DIRFR8STATESWADI, "w+") as csvfile1:
+		with open(input_dir) as csvfile0:
+			with open(output_dir, "w+") as csvfile1:
 				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
 				spamwriter = csv.writer(csvfile1, delimiter=" ", quotechar="|")
 
@@ -727,7 +697,7 @@ class Task5:
 				print("State Creation done")
 
 
-	def FR8ExpressionVerify(self):
+	def FR8ExpressionVerify(self, input_dir, output_dir):
 		"""
 		UPDATED: 1/4/19
 		Will be verifying multiple logical expressions.
@@ -750,8 +720,8 @@ class Task5:
 		variables = ["Date", "Time", "2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601", "water_level_state", "consumption_state", "mcv_state"]
 		output_variables = ["Date", "Time", "Output"]
 
-		with open(DIRFR8STATESWADI) as csvfile0:
-			with open(DIRFR8RESULT, "w+") as csvfile1:
+		with open(input_dir) as csvfile0:
+			with open(output_dir, "w+") as csvfile1:
 				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
 				spamwriter = csv.writer(csvfile1, delimiter=" ", quotechar="|")
 
@@ -772,7 +742,7 @@ class Task5:
 				print("Done. Number of datapoints that follow expression: {0}, Ratio: {1}".format(counter2, counter2/counter0))
 
 
-	def GraphCreateResult(self):
+	def GraphCreateResult(self, input_dir, output_dir):
 		"""
 		UPDATED: 1/4/19
 		Returns csv file, where each datapoint indicates True under "Output" when an attack is happening, False otherwise
@@ -799,8 +769,8 @@ class Task5:
 			attackTiming.append([self.convertString(i[0]), self.convertString(i[1])])
 			stateList.append(0)
 
-		with open(DIRDIRTYPROCESSEDWADI) as csvfile0:
-			with open(DIRGRAPHRESULT, "w+") as csvfile1:
+		with open(input_dir) as csvfile0:
+			with open(output_dir, "w+") as csvfile1:
 				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
 				spamwriter = csv.writer(csvfile1, delimiter=" ", quotechar="|")
 
@@ -858,7 +828,7 @@ class Task5:
 				print("testCounter: {0}".format(testCounter))
 
 
-	def GraphTest(self, dirty_data_dir, fr_result_dir):
+	def TotalTest(self, dirty_data_dir, fr_result_dir):
 		"""
 		UPDATED: 3/4/19
 		Checks that all csv files contain same number of datapoints, returns True if this test passes, False otherwise
@@ -898,7 +868,77 @@ class Task5:
 			return
 
 
-	def GraphRead(self, dirty_data_dir, fr_result_dir, testPass):
+	def TotalStats(self, dirty_data_dir, fr_result_dir, testPass):
+		"""
+		Counts number of False positive, True positive, False negative, True negative
+		DEFINE ATTACK AS POSITIVE
+
+
+		Note:
+		dirty data is 1 when there is an attack, 0 when there is not
+		fr is 1 when there is no attack, 0 when there is
+		"""
+		testCounter = 0
+		output = []
+
+		if not testPass:
+			print("TotalTest did not pass")
+			return
+
+		if len(fr_result_dir.keys()) == 0:
+			print("There is no DIR provided for the FRs")
+			return
+
+		for i in fr_result_dir.keys():
+			suboutput = {"Name":None, "True positive":0, "False positive":0, "True negative":0, "False negative":0, "Total points":0}
+			dirtyDataList = None
+			FRList = None
+
+			with open(dirty_data_dir) as csvfile0:
+				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
+				for row in spamreader:
+					dirtyDataList = copy.deepcopy(row)
+
+			with open(fr_result_dir[i]) as csvfile0:
+				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
+				for row in spamreader:
+					FRList = copy.deepcopy(row)
+
+			suboutput["Name"] = i
+
+			for i in range(len(dirtyDataList)):
+				if dirtyDataList[i] == "1.0":
+					# positive
+					if FRList[i] == "0.0":
+						# True
+						suboutput["True positive"] += 1
+						# print("True positive - dirty: {0}; fr: {1}".format(dirtyDataList[i], FRList[i]))
+					else:
+						# False
+						suboutput["False positive"] += 1
+						# print("False positive - dirty: {0}; fr: {1}".format(dirtyDataList[i], FRList[i]))
+				else:
+					# negative
+					if FRList[i] == "1.0":
+						# True
+						suboutput["True negative"] += 1
+						# print("True negative - dirty: {0}; fr: {1}".format(dirtyDataList[i], FRList[i]))
+					else:
+						# False
+						suboutput["False negative"] += 1
+						# print("False negative - dirty: {0}; fr: {1}".format(dirtyDataList[i], FRList[i]))
+
+				suboutput["Total points"] += 1
+
+			output.append(suboutput)
+		print("Total stats done")
+		print(output)
+
+
+
+
+
+	def TotalRead(self, dirty_data_dir, fr_result_dir, testPass):
 		"""
 		UPDATED: 3/4/19
 
@@ -916,7 +956,7 @@ class Task5:
 
 		
 		if not testPass:
-			print("GraphTest did not pass")
+			print("TotalTest did not pass")
 			return
 
 		fr_result_dir[nameDirtyData] = dirty_data_dir  # append dirty data dir into dictionary so we can onvert everything at one go
@@ -961,35 +1001,129 @@ class Task5:
 
 
 
+DIRPROCESSEDWADI = "./data/processed_clean/processedWadi.csv"
+DIRDIRTYPROCESSEDWADI = "./data/processed_dirty/WADI_attackdata_October.csv"
 
+# --- PHASE ONE ---
+"""
+Squashing entire dataset into 1000 datapoints
+"""
+# SQUASHED_VALUE = 1000
+# DIRFR1DATATIMESPLIT = "./data/misc/phase1FR1dataTimeSplit.csv"
+# DIRFR1SPLIT = "./data/misc/phase1FR1SplitData.csv"
+# DIRFR1STATESWADI = "./data/misc/phase1FR1States.csv"
+# DIRFR1RESULT = "./data/misc/phase1FR1Result.csv"
+# DIRFR1RESULTSQUASHED = "./data/misc/phase1FR1ResultSquashed.csv"
 
+# DIRFR8DATATIMESPLIT = "./data/misc/phase1FR8dataTimeSplit.csv"
+# DIRFR8SPLIT = "./data/misc/phase1FR8SplitData.csv"
+# DIRFR8STATESWADI = "./data/misc/phase1FR8States.csv"
+# DIRFR8RESULT = "./data/misc/phase1FR8Result.csv"
+# DIRFR8RESULTSQUASHED = "./data/misc/phase1FR8ResultSQUASHED.csv"
 
-# for testing FR1
+# DIRGRAPHRESULT = "./data/misc/phase1GraphResult.csv"  # for dirty data
+# DIRGRAPHRESULTSQUASHED = "./data/misc/phase1GraphResultSquashed.csv"
+
+# ATTACKTIMING = [["9/10/17 19:25:00", "9/10/17 19:50:16"],
+# 				["10/10/17 10:24:10", "10/10/17 10:34:00"],
+# 				["10/10/17 10:55:00", "10/10/17 11:24:00"],
+# 				["10/10/17 11:30:40", "10/10/17 11:44:50"],
+# 				["10/10/17 13:39:30", "10/10/17 13:50:40"],
+# 				["10/10/17 14:48:17", "10/10/17 14:59:55"],
+# 				["10/10/17 17:40:00", "10/10/17 17:49:40"],
+# 				["10/10/17 10:55:00", "10/10/17 10:56:27"],
+# 				["11/10/17 11:17:54", "11/10/17 11:31:20"],
+# 				["11/10/17 11:36:31", "11/10/17 11:47:00"],
+# 				["11/10/17 11:59:00", "11/10/17 12:05:00"],
+# 				["11/10/17 12:07:30", "11/10/17 12:10:52"],
+# 				["11/10/17 12:16:00", "11/10/17 12:25:36"],
+# 				["11/10/17 15:26:30", "11/10/17 15:37:00"],]
+
+# # for testing FR1
 # proportionForTraining = 0.6
 # proportionForTesting = 1
-# Task5().extractDatapoints("10/10/17 11:30:40", "10/10/17 11:44:50", DIRFR1DATATIMESPLIT)
-# stats = Task5().calStats(["1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
-# Task5().splitData(["Date", "Time", "1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, DIRDIRTYPROCESSEDWADI, DIRFR1SPLIT, proportion=proportionForTesting)
-# Task5().FR1stateCreation(DIRFR1SPLIT, stats)
-# Task5().FR1ExpressionVerify()
+# Task5().extractDatapoints(DIRDIRTYPROCESSEDWADI, DIRFR1DATATIMESPLIT, "10/10/17 11:30:40", "10/10/17 11:44:50")
+# stats = Task5().calStats(DIRPROCESSEDWADI, ["1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
+# Task5().splitData(DIRDIRTYPROCESSEDWADI, DIRFR1SPLIT, ["Date", "Time", "1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, proportion=proportionForTesting)
+# Task5().FR1stateCreation(DIRFR1SPLIT, DIRFR1STATESWADI, stats)
+# Task5().FR1ExpressionVerify(DIRFR1STATESWADI, DIRFR1RESULT)
+# Task5().returnList(DIRFR1RESULT, DIRFR1RESULTSQUASHED, SQUASHED_VALUE)  # create squashed results and produce ratio
 
-# for testing FR8
+
+# # for testing FR8
 # proportionForTraining = 0.6
 # proportionForTesting = 1
-# Task5().extractDatapoints("10/10/17 11:30:40", "10/10/17 11:44:50", DIRFR8DATATIMESPLIT)
-# stats = Task5().calStats(["2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
-# Task5().splitData(["Date", "Time", "2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, DIRDIRTYPROCESSEDWADI, DIRFR8SPLIT, proportion=proportionForTesting)
-# Task5().FR8stateCreation(DIRFR8SPLIT, stats)
-# Task5().FR8ExpressionVerify() 
+# Task5().extractDatapoints(DIRDIRTYPROCESSEDWADI, DIRFR8DATATIMESPLIT, "10/10/17 11:30:40", "10/10/17 11:44:50")
+# stats = Task5().calStats(DIRPROCESSEDWADI, ["2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
+# Task5().splitData(DIRDIRTYPROCESSEDWADI, DIRFR8SPLIT, ["Date", "Time", "2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, proportion=proportionForTesting)
+# Task5().FR8stateCreation(DIRFR8SPLIT, DIRFR8STATESWADI, stats)
+# Task5().FR8ExpressionVerify(DIRFR8STATESWADI, DIRFR8RESULT) 
+# Task5().returnList(DIRFR8RESULT, DIRFR8RESULTSQUASHED, SQUASHED_VALUE)  # create squashed results and produce ratio
 
-# To create squashed results and test them
-# Task5().returnList(DIRFR8RESULT, DIRFR8RESULTSQUASHED)  # create squashed results and produce ratio
-# Task5().ResultReader(DIRFR8RESULT)  # produce ratio for original data
-# Task5().GraphCreateResult()  # create squashed results for dirty data
-# Task5().returnList(DIRGRAPHRESULT, DIRGRAPHRESULTSQUASHED)
+# # for dirty data
+# Task5().GraphCreateResult(DIRDIRTYPROCESSEDWADI, DIRGRAPHRESULT)  # create true/false results for dirty data
+# Task5().returnList(DIRGRAPHRESULT, DIRGRAPHRESULTSQUASHED, SQUASHED_VALUE)
+# Task5().ResultReader(DIRGRAPHRESULT)  # produce ratio for original data
 
-# To show graph
-fr_result_dir = {"FR1":DIRFR1RESULTSQUASHED}
-# fr_result_dir = {}
-testResult = Task5().GraphTest(DIRGRAPHRESULTSQUASHED, fr_result_dir)
-Task5().GraphRead(DIRGRAPHRESULTSQUASHED, fr_result_dir, True)
+# # To show graph
+# fr_result_dir = {"FR8":DIRFR8RESULTSQUASHED}
+# testResult = Task5().TotalTest(DIRGRAPHRESULTSQUASHED, fr_result_dir)
+# Task5().TotalRead(DIRGRAPHRESULTSQUASHED, fr_result_dir, True)
+
+
+
+
+# --- PHASE TWO ---
+"""
+Slicing out attack data on attack identifier 12-15 inclusive
+"""
+DIRGRAPHSLICED = "./data/misc/phase2GraphSliced.csv"
+DIRGRAPHRESULT = "./data/misc/phase2GraphResult.csv"  # for dirty data
+DIRGRAPHRESULTUNSQUASHED = "./data/misc/phase2GraphResultUnsquashed.csv"
+
+DIRFR1SPLIT = "./data/misc/phase2FR1SplitData.csv"
+DIRFR1STATESWADI = "./data/misc/phase2FR1States.csv"
+DIRFR1RESULT = "./data/misc/phase2FR1Result.csv"
+DIRFR1RESULTUNSQUASHED = "./data/misc/phase2FR1ResultUNSQUASHED.csv"
+
+DIRFR8SPLIT = "./data/misc/phase2FR8SplitData.csv"
+DIRFR8STATESWADI = "./data/misc/phase2FR8States.csv"
+DIRFR8RESULT = "./data/misc/phase2FR8Result.csv"
+DIRFR8RESULTUNSQUASHED = "./data/misc/phase2FR8ResultUNSQUASHED.csv"
+
+ATTACKTIMING = [["11/10/17 11:59:01", "11/10/17 12:05:00"],
+				["11/10/17 12:07:30", "11/10/17 12:10:52"],
+				["11/10/17 12:16:00", "11/10/17 12:25:36"],
+				["11/10/17 15:26:30", "11/10/17 15:36:59"],]  # first attack is shifted to one second later, and last attack is shifted to one second earlier
+
+
+# # for dirty graph
+# Task5().extractDatapoints(DIRDIRTYPROCESSEDWADI, DIRGRAPHSLICED, "11/10/17 11:59:00", "11/10/19 15:37:00")
+
+# proportionForTraining = 1
+# proportionForTesting = 1
+
+# # for testing FR1
+# stats = Task5().calStats(DIRPROCESSEDWADI, ["1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
+# Task5().splitData(DIRGRAPHSLICED, DIRFR1SPLIT, ["Date", "Time", "1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, proportion=proportionForTesting)
+# Task5().FR1stateCreation(DIRFR1SPLIT, DIRFR1STATESWADI, stats)
+# Task5().FR1ExpressionVerify(DIRFR1STATESWADI, DIRFR1RESULT)
+# Task5().returnList(DIRFR1RESULT, DIRFR1RESULTUNSQUASHED)
+
+# # for testing FR8
+# stats = Task5().calStats(DIRPROCESSEDWADI, ["2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
+# Task5().splitData(DIRGRAPHSLICED, DIRFR8SPLIT, ["Date", "Time", "2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, proportion=proportionForTesting)
+# Task5().FR8stateCreation(DIRFR8SPLIT, DIRFR8STATESWADI, stats)
+# Task5().FR8ExpressionVerify(DIRFR8STATESWADI, DIRFR8RESULT)
+# Task5().returnList(DIRFR8RESULT, DIRFR8RESULTUNSQUASHED)
+
+# # for processing dirty data
+# Task5().GraphCreateResult(DIRGRAPHSLICED, DIRGRAPHRESULT)  # create true/false results for dirty data
+# Task5().returnList(DIRGRAPHRESULT, DIRGRAPHRESULTUNSQUASHED)
+
+# # To show graph
+fr_result_dir = {"FR1":DIRFR1RESULTUNSQUASHED, "FR8":DIRFR8RESULTUNSQUASHED}
+testResult = Task5().TotalTest(DIRGRAPHRESULTUNSQUASHED, fr_result_dir)
+Task5().TotalRead(DIRGRAPHRESULTUNSQUASHED, fr_result_dir, True)
+
+Task5().TotalStats(DIRGRAPHRESULTUNSQUASHED, fr_result_dir, testResult)  # To show stats
