@@ -1,4 +1,12 @@
 """
+- Find out the FR that is causing the logical expression of FR8 to return a false positive for consecutive
+ data points for sliced dirty data. (Note that this period is causing FR1 to return false positive as 
+ well). Check if absolute value lies close to the threshold
+- Keeping number of buckets constant, increase threshold of bucket from mean +- 2 stddev to mean +- 3 stddev
+- Try having 5 buckets: mean +- 2 stddev; mean +- 1 stddev
+
+
+
 To do: (11/4/19)
 - Segment out datapoints between start of attack indicator 12 to end of attack indicator 15 and plot graph
 - Count number of true and false positives. (true positives is where attack is supposed to happen for either the FR itself, or the FRs that are related to that FR)
@@ -868,10 +876,12 @@ class Task5:
 			return
 
 
-	def TotalStats(self, dirty_data_dir, fr_result_dir, testPass):
+	def TotalStats(self, dirty_data_dir, fr_result_dir, testPass, testOrder, FRrelation):
 		"""
 		Counts number of False positive, True positive, False negative, True negative
 		DEFINE ATTACK AS POSITIVE
+
+		QuickFix: Added preVal, testOrderCounter, testOrder, and FRrelation to only record data points if they affect the FR
 
 
 		Note:
@@ -890,7 +900,7 @@ class Task5:
 			return
 
 		for i in fr_result_dir.keys():
-			suboutput = {"Name":None, "True positive":0, "False positive":0, "True negative":0, "False negative":0, "Total points":0}
+			suboutput = {"Name":None, "True positive":0, "False positive":0, "True negative":0, "False negative":0, "Not counted":0, "Total points":0}
 			dirtyDataList = None
 			FRList = None
 
@@ -906,36 +916,47 @@ class Task5:
 
 			suboutput["Name"] = i
 
-			for i in range(len(dirtyDataList)):
-				if dirtyDataList[i] == "1.0":
+			testOrderCounter = -1
+			preVal = "0.0"
+			for j in range(len(dirtyDataList)):
+				if dirtyDataList[j] == "1.0":
 					# positive
-					if FRList[i] == "0.0":
-						# True
-						suboutput["True positive"] += 1
-						# print("True positive - dirty: {0}; fr: {1}".format(dirtyDataList[i], FRList[i]))
+					if preVal == "0.0":
+						testOrderCounter += 1
+
+
+					if testOrder[testOrderCounter] in FRrelation[i]:
+						if FRList[j] == "0.0":
+							# True
+							suboutput["True positive"] += 1
+							# print("True positive - dirty: {0}; fr: {1}".format(dirtyDataList[i], FRList[i]))
+						else:
+							# False
+							suboutput["False positive"] += 1
+							# print("False positive - dirty: {0}; fr: {1}".format(dirtyDataList[i], FRList[i]))
 					else:
-						# False
-						suboutput["False positive"] += 1
-						# print("False positive - dirty: {0}; fr: {1}".format(dirtyDataList[i], FRList[i]))
+						suboutput["Not counted"] += 1
+
 				else:
 					# negative
-					if FRList[i] == "1.0":
-						# True
-						suboutput["True negative"] += 1
-						# print("True negative - dirty: {0}; fr: {1}".format(dirtyDataList[i], FRList[i]))
+					if testOrder[testOrderCounter] in FRrelation[i]:
+						if FRList[j] == "1.0":
+							# True
+							suboutput["True negative"] += 1
+							# print("True negative - dirty: {0}; fr: {1}".format(dirtyDataList[i], FRList[i]))
+						else:
+							# False
+							suboutput["False negative"] += 1
+							# print("False negative - dirty: {0}; fr: {1}".format(dirtyDataList[i], FRList[i]))
 					else:
-						# False
-						suboutput["False negative"] += 1
-						# print("False negative - dirty: {0}; fr: {1}".format(dirtyDataList[i], FRList[i]))
+						suboutput["Not counted"] += 1
 
+				preVal = copy.deepcopy(dirtyDataList[j])
 				suboutput["Total points"] += 1
 
 			output.append(suboutput)
 		print("Total stats done")
 		print(output)
-
-
-
 
 
 	def TotalRead(self, dirty_data_dir, fr_result_dir, testPass):
@@ -1039,6 +1060,8 @@ Squashing entire dataset into 1000 datapoints
 # 				["11/10/17 12:16:00", "11/10/17 12:25:36"],
 # 				["11/10/17 15:26:30", "11/10/17 15:37:00"],]
 
+
+
 # # for testing FR1
 # proportionForTraining = 0.6
 # proportionForTesting = 1
@@ -1096,6 +1119,8 @@ ATTACKTIMING = [["11/10/17 11:59:01", "11/10/17 12:05:00"],
 				["11/10/17 12:16:00", "11/10/17 12:25:36"],
 				["11/10/17 15:26:30", "11/10/17 15:36:59"],]  # first attack is shifted to one second later, and last attack is shifted to one second earlier
 
+ATTACKORDER = ["FR8", "FR7", "None", "FR2"]  # quick fix to label attacks
+FRRELATION = {"FR1":["FR1", "FR2", "FR8"], "FR2":["FR1", "FR2"], "FR3":["FR3"], "FR6":["FR6", "FR7", "FR8"], "FR7":["FR7", "FR8"], "FR8":["FR1", "FR6", "FR8"]}
 
 # # for dirty graph
 # Task5().extractDatapoints(DIRDIRTYPROCESSEDWADI, DIRGRAPHSLICED, "11/10/17 11:59:00", "11/10/19 15:37:00")
@@ -1122,8 +1147,60 @@ ATTACKTIMING = [["11/10/17 11:59:01", "11/10/17 12:05:00"],
 # Task5().returnList(DIRGRAPHRESULT, DIRGRAPHRESULTUNSQUASHED)
 
 # # To show graph
-fr_result_dir = {"FR1":DIRFR1RESULTUNSQUASHED, "FR8":DIRFR8RESULTUNSQUASHED}
+fr_result_dir = {"FR8":DIRFR8RESULTUNSQUASHED}
 testResult = Task5().TotalTest(DIRGRAPHRESULTUNSQUASHED, fr_result_dir)
 Task5().TotalRead(DIRGRAPHRESULTUNSQUASHED, fr_result_dir, True)
 
-Task5().TotalStats(DIRGRAPHRESULTUNSQUASHED, fr_result_dir, testResult)  # To show stats
+# Task5().TotalStats(DIRGRAPHRESULTUNSQUASHED, fr_result_dir, testResult, ATTACKORDER, FRRELATION)  # To show stats
+
+
+
+# ----- PHASE THREE -----
+"""
+Look into details of FRs
+"""
+DIRGRAPHSLICED = "./data/misc/phase3GraphSliced.csv"
+DIRGRAPHRESULT = "./data/misc/phase3GraphResult.csv"  # for dirty data
+DIRGRAPHRESULTUNSQUASHED = "./data/misc/phase3GraphResultUnsquashed.csv"
+
+DIRFR1SPLIT = "./data/misc/phase3FR1SplitData.csv"
+DIRFR1STATESWADI = "./data/misc/phase3FR1States.csv"
+DIRFR1RESULT = "./data/misc/phase3FR1Result.csv"
+DIRFR1RESULTUNSQUASHED = "./data/misc/phase3FR1ResultUNSQUASHED.csv"
+
+DIRFR8SPLIT = "./data/misc/phase3FR8SplitData.csv"
+DIRFR8STATESWADI = "./data/misc/phase3FR8States.csv"
+DIRFR8RESULT = "./data/misc/phase3FR8Result.csv"
+DIRFR8RESULTUNSQUASHED = "./data/misc/phase3FR8ResultUNSQUASHED.csv"
+
+ATTACKTIMING = [["11/10/17 11:59:01", "11/10/17 12:05:00"],
+				["11/10/17 12:07:30", "11/10/17 12:10:52"],
+				["11/10/17 12:16:00", "11/10/17 12:25:36"],
+				["11/10/17 15:26:30", "11/10/17 15:36:59"],]  # first attack is shifted to one second later, and last attack is shifted to one second earlier
+
+ATTACKORDER = ["FR8", "FR7", "None", "FR2"]  # quick fix to label attacks
+FRRELATION = {"FR1":["FR1", "FR2", "FR8"], "FR2":["FR1", "FR2"], "FR3":["FR3"], "FR6":["FR6", "FR7", "FR8"], "FR7":["FR7", "FR8"], "FR8":["FR1", "FR6", "FR8"]}
+
+# # for dirty graph
+# Task5().extractDatapoints(DIRDIRTYPROCESSEDWADI, DIRGRAPHSLICED, "11/10/17 11:59:00", "11/10/19 15:37:00")
+
+# proportionForTraining = 1
+# proportionForTesting = 1
+
+# # for testing FR1
+# stats = Task5().calStats(DIRPROCESSEDWADI, ["1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
+# Task5().splitData(DIRGRAPHSLICED, DIRFR1SPLIT, ["Date", "Time", "1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, proportion=proportionForTesting)
+# Task5().FR1stateCreation(DIRFR1SPLIT, DIRFR1STATESWADI, stats)
+# Task5().FR1ExpressionVerify(DIRFR1STATESWADI, DIRFR1RESULT)
+# Task5().returnList(DIRFR1RESULT, DIRFR1RESULTUNSQUASHED)
+
+# # for testing FR8
+# stats = Task5().calStats(DIRPROCESSEDWADI, ["2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
+# Task5().splitData(DIRGRAPHSLICED, DIRFR8SPLIT, ["Date", "Time", "2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, proportion=proportionForTesting)
+# Task5().FR8stateCreation(DIRFR8SPLIT, DIRFR8STATESWADI, stats)
+# Task5().FR8ExpressionVerify(DIRFR8STATESWADI, DIRFR8RESULT)
+# Task5().returnList(DIRFR8RESULT, DIRFR8RESULTUNSQUASHED)
+
+# # for processing dirty data
+# Task5().GraphCreateResult(DIRGRAPHSLICED, DIRGRAPHRESULT)  # create true/false results for dirty data
+# Task5().returnList(DIRGRAPHRESULT, DIRGRAPHRESULTUNSQUASHED)
