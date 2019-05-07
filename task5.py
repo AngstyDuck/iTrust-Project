@@ -1,130 +1,22 @@
 """
-- Find out the FR that is causing the logical expression of FR8 to return a false positive for consecutive
- data points for sliced dirty data. (Note that this period is causing FR1 to return false positive as 
- well). Check if absolute value lies close to the threshold
-- Keeping number of buckets constant, increase threshold of bucket from mean +- 2 stddev to mean +- 3 stddev
-- Try having 5 buckets: mean +- 2 stddev; mean +- 1 stddev
+07/5/19
+- Try having 5 buckets: mean +- 2 stddev; mean +- 1 stddev (if the datapoints already don't follow when we bucket them into 3 buckets, how will bucketing into 5 buckets make things better?)
+
+(discuss solutions with venkat)
+- double check value of pump for FR1 - if the value is discrete why are we calculating mean and std =.=
 
 
-
-To do: (11/4/19)
-- Segment out datapoints between start of attack indicator 12 to end of attack indicator 15 and plot graph
-- Count number of true and false positives. (true positives is where attack is supposed to happen for either the FR itself, or the FRs that are related to that FR)
---- If computer can't handle the number of data, slice out datapoints from attack to reduce number of datapoints during attack so that total number of datapoints is smth matplotlib can handle
-
-
-Note:
-850 of the dirty data points are attacked (For FR8). That only makes up 0.491% of total 
-data points in dirty dataset. Measuring proportion of violating data points 
-shouldn't be our metric, the number of consecutive violating datapoints should be instead.
-
-
----- FOR DIRTY DATA ----
-When data is squashed into 1000 datapoints,
-for original data ratio of "1" datapoints is 0.008813953488372092
-for squashed data ratio of "1" datapoints is 0.008773046608256849
-I ran the code
-```
-Task5().returnList(DIRGRAPHRESULT, DIRGRAPHRESULTSQUASHED)
-Task5().ResultReader(DIRGRAPHRESULT)
-```
-
-------------------------
-
-
----- FOR FR1 ----
-Segmented clean data (trained clean data):
-Number of datapoints that follow expression: 450816, Ratio: 0.9317441060182994
-
-Dirty data (trained on clean data):
-Number of datapoints that follow expression: 156497, Ratio: 0.9056434532007731
-
-Dirty data (segmented from attack indicator 5):
-Number of datapoints that follow expression: 0, Ratio: 0.0
-
-
-When data is squashed into 1000 datapoints,
-for original data ratio of "1" datapoints is 0.9056434532007731
-for squashed data ratio of "1" datapoints is 0.9052093023255818
-I ran the code
-```
-Task5().returnList(DIRFR1RESULT, DIRFR1RESULTSQUASHED)
-Task5().ResultReader(DIRFR1RESULT)
-```
------------------
-
-
----- FOR FR8 ----
-Segmented clean data (trained on clean data):
-Number of datapoints that follow expression: 437068, Ratio: 0.9033298128930786
-
-Dirty data (trained on clean data):
-Number of datapoints that follow expression: 152950, Ratio: 0.8851170704042778
-
-Dirty data (segemented from attack indicator 5):
-Number of datapoints that follow expression: 0, Ratio: 0.0
-
-
-When data is squashed into 1000 datapoints,
-for original data ratio of "1" datapoints is 0.8851170704042778
-for squashed data ratio of "1" datapoints is 0.8845872093023256
-I ran the code
-```
-Task5().returnList(DIRFR8RESULT, DIRFR8RESULTSQUASHED)
-Task5().ResultReader(DIRFR8RESULT)
-```
-
------------------
+for 2 std dev:
+- FR1 the very prominent dip happened in datapoint 3760 to datapoint 4097
+- FR8 the very prominent dip happened in datapoint 3760 to datapoint 4142
 
 
 
 
 
-Variable: 2_LT_002_PV; 
-	Mean: 75.16463184634425; 
-	Standard Deviation: 4.004997969737664; 
-	Max: 83.152; 
-	Min: 33.0904;
-Variable: 2_FIT_002; 
-	Mean: 0.28483256369156784; 
-	Standard Deviation: 0.27073219527238845; 
-	Max: 1.16829; 
-	Min: 0.0;
-Variable: 2_FIT_003; 
-	Mean: 0.21117356601932516; 
-	Standard Deviation: 0.5271777665017551; 
-	Max: 5.14847; 
-	Min: 0.0;
-Variable: 2_MCV_101; 
-	Mean: 10.938248349341544; 
-	Standard Deviation: 15.271707695853015; 
-	Max: 100.0; 
-	Min: 0.0;
-Variable: 2_MCV_201; 
-	Mean: 12.121086169732; 
-	Standard Deviation: 17.037270430123243; 
-	Max: 100.0; 
-	Min: 0.0;
-Variable: 2_MCV_301; 
-	Mean: 17.074269185758087; 
-	Standard Deviation: 21.038919976481115; 
-	Max: 100.0; 
-	Min: 0.0;
-Variable: 2_MCV_401; 
-	Mean: 10.46136254010838; 
-	Standard Deviation: 15.776893830293163; 
-	Max: 100.0; 
-	Min: 0.0;
-Variable: 2_MCV_501; 
-	Mean: 13.37584535434821; 
-	Standard Deviation: 17.00850125136361; 
-	Max: 100.0; 
-	Min: 0.0;
-Variable: 2_MCV_601; 
-	Mean: 17.443244341194962; 
-	Standard Deviation: 22.88759628318109; 
-	Max: 100.0; 
-	Min: 0.0;
+
+
+
 
 """
 
@@ -473,6 +365,39 @@ class Task5:
 			print("ResultReader: Number of datapoints that follow logical expression: {0}, Ratio: {1}".format(counter2, counter2/counter0))
 
 
+	def returnList1(self, input_dir, output_dir):
+		"""
+		Used as an alternative to returnList. returnList1 assumes that no squashing is involved (data 
+		is directly added to the list) and also appends time and date to output for plotting of graph.
+		To completely replace returnList once we have confidence that no squashing will ever be required.
+		"""
+		variables = ["Date", "Time", "Output"]
+		indexList = {}
+		output = []
+		output_timedate = []
+		counter0 = 0
+		testCounter = 0
+
+		with open(input_dir) as csvfile0:
+			with open(output_dir, "w+") as csvfile1:
+				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
+				spamwriter = csv.writer(csvfile1, delimiter=" ", quotechar="|")
+
+				for row in spamreader:
+					if counter0 == 0:
+						indexList = self.createIndexList(row, variables)
+
+					else:
+						output.append(row[indexList["Output"]])
+						output_timedate.append(row[indexList["Time"]]+";"+row[indexList["Date"]])
+
+					counter0 += 1
+
+				print("returnList complete, number of datapoints written: {0}".format(counter0-1))
+				spamwriter.writerow(output)
+				spamwriter.writerow(output_timedate)
+
+
 	def returnList(self, input_dir, output_dir, compress_length=None):
 			"""
 			UPDATED: 3/4/19
@@ -551,18 +476,19 @@ class Task5:
 
 				spamwriter.writerow(output)
 
-			print("ReturnList (squashed list): Ratio of (number of True)/(total number of datapoints): {0}; length of output list: {1}".format(counter2/1000, len(output)))
+			print("ReturnList (squashed list): Ratio of (number of True)/(total number of datapoints): {0}; length of output list: {1}".format(counter2/counter0, len(output)))
 			print("testCounter: {0}".format(testCounter))
 
 
-	def FR1stateCreation(self, input_dir, output_dir, statsDict):
+	def FR1stateCreation(self, input_dir, output_dir, statsDict, numberStdDev=2):
 		"""
-		UPDATED: 1/4/19
+		UPDATED: 8/5/19
+
+		state of pump1 to ER == state of water level of ER == state of sum of % "open-ness" of consumer tank inlets
 
 		"""
 		counter0 = 0
 		counter1 = 0
-		numberStdDev = 2
 		indexList = {}
 		variables = ["Date", "Time", "1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"]
 
@@ -575,38 +501,43 @@ class Task5:
 				for row in spamreader:
 					if counter0 == 0:
 						indexList = self.createIndexList(row, variables)
-						row += ["water_pump_state", "water_level_state", "mcv_state"]
+						row += ["water_pump_state", "water_level_state", "mcv_state", "water_pump_value", "water_level_value", "mcv_value"]
 						spamwriter.writerow(row)
 					else:
 						addToWrite = [0,0,0]
 
-						if float(row[indexList["1_P_005"]]) < statsDict["1_P_005"][0]-(numberStdDev*statsDict["1_P_005"][1]):
+						water_pump_value = float(row[indexList["1_P_005"]])
+						if water_pump_value < statsDict["1_P_005"][0]-(numberStdDev*statsDict["1_P_005"][1]):
 							addToWrite[0] = 0
-						elif float(row[indexList["1_P_005"]]) < statsDict["1_P_005"][0]+(numberStdDev*statsDict["1_P_005"][1]):
+						elif water_pump_value < statsDict["1_P_005"][0]+(numberStdDev*statsDict["1_P_005"][1]):
 							addToWrite[0] = 1
 						else:
 							addToWrite[0] = 2
 
-						if float(row[indexList["2_LT_002_PV"]]) < statsDict["2_LT_002_PV"][0]-numberStdDev*statsDict["2_LT_002_PV"][1]:
+						water_level_value = float(row[indexList["2_LT_002_PV"]])
+						if water_level_value < statsDict["2_LT_002_PV"][0]-numberStdDev*statsDict["2_LT_002_PV"][1]:
 							addToWrite[1] = 0
-						elif float(row[indexList["2_LT_002_PV"]]) < statsDict["2_LT_002_PV"][0]+numberStdDev*statsDict["2_LT_002_PV"][1]:
+						elif water_level_value < statsDict["2_LT_002_PV"][0]+numberStdDev*statsDict["2_LT_002_PV"][1]:
 							addToWrite[1] = 1
 						else:
 							addToWrite[1] = 2
 
 						mcvMean = (statsDict["2_MCV_101"][0] + statsDict["2_MCV_201"][0] + statsDict["2_MCV_301"][0] + statsDict["2_MCV_401"][0] + statsDict["2_MCV_501"][0] + statsDict["2_MCV_601"][0])
 						mcvStdDev = (statsDict["2_MCV_101"][1]**2 + statsDict["2_MCV_201"][1]**2 + statsDict["2_MCV_301"][1]**2 + statsDict["2_MCV_401"][1]**2 + statsDict["2_MCV_501"][1]**2 + statsDict["2_MCV_601"][1]**2)**0.5
-						if (float(row[indexList["2_MCV_101"]]) + float(row[indexList["2_MCV_201"]]) + float(row[indexList["2_MCV_301"]]) + float(row[indexList["2_MCV_401"]]) + float(row[indexList["2_MCV_501"]]) + float(row[indexList["2_MCV_601"]]) < mcvMean - 2*mcvStdDev):
+						mcv_value = float(row[indexList["2_MCV_101"]]) + float(row[indexList["2_MCV_201"]]) + float(row[indexList["2_MCV_301"]]) + float(row[indexList["2_MCV_401"]]) + float(row[indexList["2_MCV_501"]]) + float(row[indexList["2_MCV_601"]])
+						if mcv_value < mcvMean - numberStdDev*mcvStdDev:
 							addToWrite[2] = 0
-						elif (float(row[indexList["2_MCV_101"]]) + float(row[indexList["2_MCV_201"]]) + float(row[indexList["2_MCV_301"]]) + float(row[indexList["2_MCV_401"]]) + float(row[indexList["2_MCV_501"]]) + float(row[indexList["2_MCV_601"]]) < mcvMean + 2*mcvStdDev):
+						elif mcv_value < mcvMean + numberStdDev*mcvStdDev:
 							addToWrite[2] = 1
 						else:
 							addToWrite[2] = 2
 
 						row += addToWrite
+						row += [water_pump_value, water_level_value, mcv_value]
 						spamwriter.writerow(row)
 
 					counter0 += 1
+				print("mcv - mean: {0}, stddev: {1}".format(mcvMean, mcvStdDev))
 				print("state creation done")
 
 
@@ -624,8 +555,8 @@ class Task5:
 		counter1 = 0
 		counter2 = 0  # counts number of datapoints that are relevant and follow expression
 		indexList = {}
-		variables = ["Date", "Time", "1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601", "water_pump_state", "water_level_state", "mcv_state"]
-		output_variables = ["Date", "Time", "Output"]
+		variables = ["Date", "Time", "1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601", "water_pump_state", "water_level_state", "mcv_state", "water_pump_value", "water_level_value", "mcv_value"]
+		output_variables = ["Date", "Time", "Output", "water_pump_state", "water_level_state", "mcv_state", "water_pump_value", "water_level_value", "mcv_value"]
 
 		with open(input_dir) as csvfile0:
 			with open(output_dir, "w+") as csvfile1:
@@ -640,23 +571,42 @@ class Task5:
 					else:
 						if row[indexList["water_pump_state"]]==row[indexList["water_level_state"]] and row[indexList["water_pump_state"]]==row[indexList["mcv_state"]]:
 							counter2 += 1
-							spamwriter.writerow([row[indexList["Date"]], row[indexList["Time"]], "1"])
+							spamwriter.writerow([row[indexList["Date"]], 
+								row[indexList["Time"]], 
+								"1", 
+								row[indexList["water_pump_state"]], 
+								row[indexList["water_level_state"]], 
+								row[indexList["mcv_state"]], 
+								row[indexList["water_pump_value"]], 
+								row[indexList["water_level_value"]], 
+								row[indexList["mcv_value"]]])
 						else:
-							spamwriter.writerow([row[indexList["Date"]], row[indexList["Time"]], "0"])
+							spamwriter.writerow([row[indexList["Date"]], 
+								row[indexList["Time"]], 
+								"0",
+								row[indexList["water_pump_state"]], 
+								row[indexList["water_level_state"]], 
+								row[indexList["mcv_state"]], 
+								row[indexList["water_pump_value"]], 
+								row[indexList["water_level_value"]], 
+								row[indexList["mcv_value"]]])
 
 					counter0 += 1
 
 				print("Done. Number of datapoints that follow expression: {0}, Ratio: {1}".format(counter2, counter2/counter0))
 
 
-	def FR8stateCreation(self, input_dir, output_dir, statsDict):
+	def FR8stateCreation(self, input_dir, output_dir, statsDict, numberStdDev=2):
 		"""
-		UPDATED: 1/4/19
+		UPDATED: 8/5/19
+
+
+		state of water level of ER == state of gravity meter water flow == state of sum of % of "open-ness" of consumer tank inlets
+
 		"""
 		waterLevelLimit = None;  # a threshold. water level above 
 		counter0 = 0
 		counter1 = 0
-		numberStdDev = 2
 		indexList = {}
 		variables = ["Date", "Time", "2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"]
 
@@ -668,36 +618,40 @@ class Task5:
 				for row in spamreader:
 					if counter0 == 0:
 						indexList = self.createIndexList(row, variables)
-						row += ["water_level_state", "consumption_state", "mcv_state"]
+						row += ["water_level_state", "consumption_state", "mcv_state", "water_level_value", "consumption_value", "mcv_value"]
 						spamwriter.writerow(row)
 
 					else:
 						addToWrite = [0,0,0]
 
-						if float(row[indexList["2_LT_002_PV"]]) < statsDict["2_LT_002_PV"][0]-(2*statsDict["2_LT_002_PV"][1]):
+						water_level_value = float(row[indexList["2_LT_002_PV"]])
+						if water_level_value < statsDict["2_LT_002_PV"][0]-(numberStdDev*statsDict["2_LT_002_PV"][1]):
 							addToWrite[0] = 0
-						elif float(row[indexList["2_LT_002_PV"]]) < statsDict["2_LT_002_PV"][0]+(2*statsDict["2_LT_002_PV"][1]):
+						elif water_level_value < statsDict["2_LT_002_PV"][0]+(numberStdDev*statsDict["2_LT_002_PV"][1]):
 							addToWrite[0] = 1
 						else:
 							addToWrite[0] = 2
 
-						if (float(row[indexList["2_FIT_002"]]) + float(row[indexList["2_FIT_003"]])) < (statsDict["2_FIT_002"][0]+statsDict["2_FIT_003"][0])-2*(((statsDict["2_FIT_002"][1]**2)+(statsDict["2_FIT_003"][1]**2))**0.5):
+						consumption_value = float(row[indexList["2_FIT_002"]]) + float(row[indexList["2_FIT_003"]])
+						if consumption_value < (statsDict["2_FIT_002"][0]+statsDict["2_FIT_003"][0])-numberStdDev*(((statsDict["2_FIT_002"][1]**2)+(statsDict["2_FIT_003"][1]**2))**0.5):
 							addToWrite[1] = 0
-						elif (float(row[indexList["2_FIT_002"]]) + float(row[indexList["2_FIT_003"]])) < (statsDict["2_FIT_002"][0]+statsDict["2_FIT_003"][0])+2*(((statsDict["2_FIT_002"][1]**2)+(statsDict["2_FIT_003"][1]**2))**0.5):
+						elif consumption_value < (statsDict["2_FIT_002"][0]+statsDict["2_FIT_003"][0])+numberStdDev*(((statsDict["2_FIT_002"][1]**2)+(statsDict["2_FIT_003"][1]**2))**0.5):
 							addToWrite[1] = 1
 						else:
 							addToWrite[1] = 2
 
 						mcvMean = (statsDict["2_MCV_101"][0] + statsDict["2_MCV_201"][0] + statsDict["2_MCV_301"][0] + statsDict["2_MCV_401"][0] + statsDict["2_MCV_501"][0] + statsDict["2_MCV_601"][0])
 						mcvStdDev = (statsDict["2_MCV_101"][1]**2 + statsDict["2_MCV_201"][1]**2 + statsDict["2_MCV_301"][1]**2 + statsDict["2_MCV_401"][1]**2 + statsDict["2_MCV_501"][1]**2 + statsDict["2_MCV_601"][1]**2)**0.5
-						if (float(row[indexList["2_MCV_101"]]) + float(row[indexList["2_MCV_201"]]) + float(row[indexList["2_MCV_301"]]) + float(row[indexList["2_MCV_401"]]) + float(row[indexList["2_MCV_501"]]) + float(row[indexList["2_MCV_601"]]) < mcvMean - 2*mcvStdDev):
+						mcv_value = float(row[indexList["2_MCV_101"]]) + float(row[indexList["2_MCV_201"]]) + float(row[indexList["2_MCV_301"]]) + float(row[indexList["2_MCV_401"]]) + float(row[indexList["2_MCV_501"]]) + float(row[indexList["2_MCV_601"]])
+						if mcv_value < mcvMean - numberStdDev*mcvStdDev:
 							addToWrite[2] = 0
-						elif (float(row[indexList["2_MCV_101"]]) + float(row[indexList["2_MCV_201"]]) + float(row[indexList["2_MCV_301"]]) + float(row[indexList["2_MCV_401"]]) + float(row[indexList["2_MCV_501"]]) + float(row[indexList["2_MCV_601"]]) < mcvMean + 2*mcvStdDev):
+						elif mcv_value < mcvMean + numberStdDev*mcvStdDev:
 							addToWrite[2] = 1
 						else:
 							addToWrite[2] = 2
 
 						row += addToWrite
+						row += [water_level_value, consumption_value, mcv_value]
 						spamwriter.writerow(row)
 
 					counter0 += 1
@@ -725,8 +679,8 @@ class Task5:
 		counter1 = 0
 		counter2 = 0  # counts number of datapoints that follow expression
 		indexList = {}
-		variables = ["Date", "Time", "2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601", "water_level_state", "consumption_state", "mcv_state"]
-		output_variables = ["Date", "Time", "Output"]
+		variables = ["Date", "Time", "2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601", "water_level_state", "consumption_state", "mcv_state", "water_level_value", "consumption_value", "mcv_value"]
+		output_variables = ["Date", "Time", "Output", "water_level_state", "consumption_state", "mcv_state", "water_level_value", "consumption_value", "mcv_value"]
 
 		with open(input_dir) as csvfile0:
 			with open(output_dir, "w+") as csvfile1:
@@ -741,9 +695,25 @@ class Task5:
 					else:
 						if row[indexList["water_level_state"]]==row[indexList["consumption_state"]] and row[indexList["water_level_state"]]==row[indexList["mcv_state"]]:
 							counter2 += 1
-							spamwriter.writerow([row[indexList["Date"]], row[indexList["Time"]], "1"])
+							spamwriter.writerow([row[indexList["Date"]], 
+								row[indexList["Time"]], 
+								"1", 
+								row[indexList["water_level_state"]], 
+								row[indexList["consumption_state"]], 
+								row[indexList["mcv_state"]], 
+								row[indexList["water_level_value"]], 
+								row[indexList["consumption_value"]], 
+								row[indexList["mcv_value"]]])
 						else:
-							spamwriter.writerow([row[indexList["Date"]], row[indexList["Time"]], "0"])
+							spamwriter.writerow([row[indexList["Date"]], 
+								row[indexList["Time"]], 
+								"0", 
+								row[indexList["water_level_state"]], 
+								row[indexList["consumption_state"]], 
+								row[indexList["mcv_state"]], 
+								row[indexList["water_level_value"]], 
+								row[indexList["consumption_value"]], 
+								row[indexList["mcv_value"]]])
 
 					counter0 += 1
 
@@ -865,9 +835,12 @@ class Task5:
 		if len(counterList) >= 2:
 			output = True
 
+			# print("--- TotalTest results ---")
 			# if all elements in counterList is the same, output remains True
-			for i in range(len(counterList)):
+			for i in range(len(dir_list)):
+				# print("file: {0}, length: {1}".format(dir_list[i], counterList[i]))
 				output  = output and (counterList[0] == counterList[i])
+			# print("--- TotalTest result end ---")
 
 			return output
 
@@ -959,9 +932,13 @@ class Task5:
 		print(output)
 
 
-	def TotalRead(self, dirty_data_dir, fr_result_dir, testPass):
+	def TotalGraphRead(self, dirty_data_dir, fr_result_dir, testPass):
 		"""
 		UPDATED: 3/4/19
+		Decisions:
+		- Did not display date time in axis; takes too long to process and zoom in/out, referring to csv file and tallying index of datapoint to 
+		row number is way faster
+
 
 		Expresses DIRGRAPHRESULT, as well as results of all FRs as a graph normalised to 1000 points
 		:param dirty_data_dir: String of dir of DIRGRAPHRESULT
@@ -974,6 +951,7 @@ class Task5:
 		compress_length = 1000  # represent the number of datapoints we're compressing the entire dataset to
 		dataPointRecord = {}  # big boi. Dictionary with key:source of list, value:lists(each representing an FR/dirty data) of 1000 elements, 1 for true, 0 for false
 		nameDirtyData = "Dirty Dataset"  # label for dirty dataset for graph
+		time_list = []
 
 		
 		if not testPass:
@@ -988,20 +966,55 @@ class Task5:
 				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
 
 				# convert list element into float objects
-				for row in spamreader:
-					subList = []
-					for j in row:
-						subList.append(float(j))
-					dataPointRecord[i] = copy.deepcopy(subList)
+				subList = []
+				for j in spamreader.__next__():
+					subList.append(float(j))
+				dataPointRecord[i] = copy.deepcopy(subList)
 				subList.clear()
 
 		# plot points
-		for i in dataPointRecord.keys():
+		for i in fr_result_dir.keys():
 			plt.plot(dataPointRecord[i], label=i)
 
 		plt.legend()
 		plt.show()
 
+
+	def ShowDetail(self, testPass, dirty_data_dir, fr_result_dir, write_result_dir):
+		"""
+		
+		"""
+		counter0 = 0  # count total number of rows in any one of the files
+		counter1 = 0  # index of file iterations
+
+		if not testPass:
+			print("TotalTest did not pass")
+			return
+
+		# assign value to counter0
+		with open(dirty_data_dir) as csvfile0:
+			spamreader0 = csv.reader(csvfile0, delimiter=" ", quotechar="|")
+			for row in spamreader0:
+				counter0 += 1
+
+
+		# fill up dataPointRecord with key:value pairs where key=name of DR/dirty data; value=list of float elements
+		# for i in fr_result_dir.keys():
+		with open(dirty_data_dir) as csvfile0:
+			with open(fr_result_dir) as csvfile1:
+				with open(write_result_dir, "w+") as csvfile2:
+					spamreader0 = csv.reader(csvfile0, delimiter=" ", quotechar="|")
+					spamreader1 = csv.reader(csvfile1, delimiter=" ", quotechar="|")
+					spamwriter0 = csv.writer(csvfile2, delimiter=" ", quotechar="|")
+
+					while (counter1 < counter0):
+						counter1 += 1
+						row0 = spamreader0.__next__()
+						row1 = spamreader1.__next__()
+
+						if row0[2] == row1[2]:
+							spamwriter0.writerow(row1)
+							print(row1)
 
 
 
@@ -1114,6 +1127,11 @@ DIRFR8STATESWADI = "./data/misc/phase2FR8States.csv"
 DIRFR8RESULT = "./data/misc/phase2FR8Result.csv"
 DIRFR8RESULTUNSQUASHED = "./data/misc/phase2FR8ResultUNSQUASHED.csv"
 
+# for storing test details
+DIRFR1DETAILWRONG = "./data/misc/phase2FR1DetailWrong.csv"
+DIRFR8DETAILWRONG = "./data/misc/phase2FR8DetailWrong.csv"
+
+
 ATTACKTIMING = [["11/10/17 11:59:01", "11/10/17 12:05:00"],
 				["11/10/17 12:07:30", "11/10/17 12:10:52"],
 				["11/10/17 12:16:00", "11/10/17 12:25:36"],
@@ -1125,82 +1143,34 @@ FRRELATION = {"FR1":["FR1", "FR2", "FR8"], "FR2":["FR1", "FR2"], "FR3":["FR3"], 
 # # for dirty graph
 # Task5().extractDatapoints(DIRDIRTYPROCESSEDWADI, DIRGRAPHSLICED, "11/10/17 11:59:00", "11/10/19 15:37:00")
 
-# proportionForTraining = 1
-# proportionForTesting = 1
+proportionForTraining = 1
+proportionForTesting = 1
 
 # # for testing FR1
-# stats = Task5().calStats(DIRPROCESSEDWADI, ["1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
+stats = Task5().calStats(DIRPROCESSEDWADI, ["1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
 # Task5().splitData(DIRGRAPHSLICED, DIRFR1SPLIT, ["Date", "Time", "1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, proportion=proportionForTesting)
-# Task5().FR1stateCreation(DIRFR1SPLIT, DIRFR1STATESWADI, stats)
+# Task5().FR1stateCreation(DIRFR1SPLIT, DIRFR1STATESWADI, stats, 2)
 # Task5().FR1ExpressionVerify(DIRFR1STATESWADI, DIRFR1RESULT)
-# Task5().returnList(DIRFR1RESULT, DIRFR1RESULTUNSQUASHED)
+# Task5().returnList1(DIRFR1RESULT, DIRFR1RESULTUNSQUASHED)
 
 # # for testing FR8
 # stats = Task5().calStats(DIRPROCESSEDWADI, ["2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
 # Task5().splitData(DIRGRAPHSLICED, DIRFR8SPLIT, ["Date", "Time", "2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, proportion=proportionForTesting)
-# Task5().FR8stateCreation(DIRFR8SPLIT, DIRFR8STATESWADI, stats)
+# Task5().FR8stateCreation(DIRFR8SPLIT, DIRFR8STATESWADI, stats, 2)
 # Task5().FR8ExpressionVerify(DIRFR8STATESWADI, DIRFR8RESULT)
-# Task5().returnList(DIRFR8RESULT, DIRFR8RESULTUNSQUASHED)
+# Task5().returnList1(DIRFR8RESULT, DIRFR8RESULTUNSQUASHED)
 
 # # for processing dirty data
 # Task5().GraphCreateResult(DIRGRAPHSLICED, DIRGRAPHRESULT)  # create true/false results for dirty data
-# Task5().returnList(DIRGRAPHRESULT, DIRGRAPHRESULTUNSQUASHED)
+# Task5().returnList1(DIRGRAPHRESULT, DIRGRAPHRESULTUNSQUASHED)
 
 # # To show graph
-fr_result_dir = {"FR8":DIRFR8RESULTUNSQUASHED}
-testResult = Task5().TotalTest(DIRGRAPHRESULTUNSQUASHED, fr_result_dir)
-Task5().TotalRead(DIRGRAPHRESULTUNSQUASHED, fr_result_dir, True)
+# fr_result_dir = {"FR8":DIRFR8RESULTUNSQUASHED}
+# testResult = Task5().TotalTest(DIRGRAPHRESULTUNSQUASHED, fr_result_dir)
+# Task5().TotalGraphRead(DIRGRAPHRESULTUNSQUASHED, fr_result_dir, testResult)
 
 # Task5().TotalStats(DIRGRAPHRESULTUNSQUASHED, fr_result_dir, testResult, ATTACKORDER, FRRELATION)  # To show stats
 
+# To show details
+# Task5().ShowDetail(True, DIRGRAPHRESULT, DIRFR8RESULT, DIRFR8DETAILWRONG)
 
-
-# ----- PHASE THREE -----
-"""
-Look into details of FRs
-"""
-DIRGRAPHSLICED = "./data/misc/phase3GraphSliced.csv"
-DIRGRAPHRESULT = "./data/misc/phase3GraphResult.csv"  # for dirty data
-DIRGRAPHRESULTUNSQUASHED = "./data/misc/phase3GraphResultUnsquashed.csv"
-
-DIRFR1SPLIT = "./data/misc/phase3FR1SplitData.csv"
-DIRFR1STATESWADI = "./data/misc/phase3FR1States.csv"
-DIRFR1RESULT = "./data/misc/phase3FR1Result.csv"
-DIRFR1RESULTUNSQUASHED = "./data/misc/phase3FR1ResultUNSQUASHED.csv"
-
-DIRFR8SPLIT = "./data/misc/phase3FR8SplitData.csv"
-DIRFR8STATESWADI = "./data/misc/phase3FR8States.csv"
-DIRFR8RESULT = "./data/misc/phase3FR8Result.csv"
-DIRFR8RESULTUNSQUASHED = "./data/misc/phase3FR8ResultUNSQUASHED.csv"
-
-ATTACKTIMING = [["11/10/17 11:59:01", "11/10/17 12:05:00"],
-				["11/10/17 12:07:30", "11/10/17 12:10:52"],
-				["11/10/17 12:16:00", "11/10/17 12:25:36"],
-				["11/10/17 15:26:30", "11/10/17 15:36:59"],]  # first attack is shifted to one second later, and last attack is shifted to one second earlier
-
-ATTACKORDER = ["FR8", "FR7", "None", "FR2"]  # quick fix to label attacks
-FRRELATION = {"FR1":["FR1", "FR2", "FR8"], "FR2":["FR1", "FR2"], "FR3":["FR3"], "FR6":["FR6", "FR7", "FR8"], "FR7":["FR7", "FR8"], "FR8":["FR1", "FR6", "FR8"]}
-
-# # for dirty graph
-# Task5().extractDatapoints(DIRDIRTYPROCESSEDWADI, DIRGRAPHSLICED, "11/10/17 11:59:00", "11/10/19 15:37:00")
-
-# proportionForTraining = 1
-# proportionForTesting = 1
-
-# # for testing FR1
-# stats = Task5().calStats(DIRPROCESSEDWADI, ["1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
-# Task5().splitData(DIRGRAPHSLICED, DIRFR1SPLIT, ["Date", "Time", "1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, proportion=proportionForTesting)
-# Task5().FR1stateCreation(DIRFR1SPLIT, DIRFR1STATESWADI, stats)
-# Task5().FR1ExpressionVerify(DIRFR1STATESWADI, DIRFR1RESULT)
-# Task5().returnList(DIRFR1RESULT, DIRFR1RESULTUNSQUASHED)
-
-# # for testing FR8
-# stats = Task5().calStats(DIRPROCESSEDWADI, ["2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
-# Task5().splitData(DIRGRAPHSLICED, DIRFR8SPLIT, ["Date", "Time", "2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, proportion=proportionForTesting)
-# Task5().FR8stateCreation(DIRFR8SPLIT, DIRFR8STATESWADI, stats)
-# Task5().FR8ExpressionVerify(DIRFR8STATESWADI, DIRFR8RESULT)
-# Task5().returnList(DIRFR8RESULT, DIRFR8RESULTUNSQUASHED)
-
-# # for processing dirty data
-# Task5().GraphCreateResult(DIRGRAPHSLICED, DIRGRAPHRESULT)  # create true/false results for dirty data
-# Task5().returnList(DIRGRAPHRESULT, DIRGRAPHRESULTUNSQUASHED)
