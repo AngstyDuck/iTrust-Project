@@ -12,12 +12,6 @@ for 2 std dev:
 
 
 
-
-
-
-
-
-
 """
 
 import csv
@@ -33,9 +27,8 @@ class Task5:
 
 	def csvCreate(self):
 		"""
-		UPDATED: 1/4/19
-
-		Converts txt file into csv file
+		Converts txt file into csv file. The directory of the txt file would be assigned to raw_data_dir,
+		and the directory of the destination file will be assigned to dest_data_dir
 		"""
 		with open(dest_data_dir, "w+") as writefile0:
 			with open(raw_data_dir, "r") as readfile0:
@@ -62,7 +55,7 @@ class Task5:
 
 	def convertString(self, inp):
 		"""
-		UPDATED: 3/4/19
+		Used for converting 
 
 		Returns (date, time, am or pm)
 		"""
@@ -1147,14 +1140,14 @@ proportionForTraining = 1
 proportionForTesting = 1
 
 # # for testing FR1
-stats = Task5().calStats(DIRPROCESSEDWADI, ["1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
+# stats = Task5().calStats(DIRPROCESSEDWADI, ["1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
 # Task5().splitData(DIRGRAPHSLICED, DIRFR1SPLIT, ["Date", "Time", "1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, proportion=proportionForTesting)
 # Task5().FR1stateCreation(DIRFR1SPLIT, DIRFR1STATESWADI, stats, 2)
 # Task5().FR1ExpressionVerify(DIRFR1STATESWADI, DIRFR1RESULT)
 # Task5().returnList1(DIRFR1RESULT, DIRFR1RESULTUNSQUASHED)
 
 # # for testing FR8
-# stats = Task5().calStats(DIRPROCESSEDWADI, ["2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
+stats = Task5().calStats(DIRPROCESSEDWADI, ["2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
 # Task5().splitData(DIRGRAPHSLICED, DIRFR8SPLIT, ["Date", "Time", "2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, proportion=proportionForTesting)
 # Task5().FR8stateCreation(DIRFR8SPLIT, DIRFR8STATESWADI, stats, 2)
 # Task5().FR8ExpressionVerify(DIRFR8STATESWADI, DIRFR8RESULT)
