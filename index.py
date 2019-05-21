@@ -55,7 +55,9 @@ class Task5:
 
 	def convertString(self, inp):
 		"""
-		Used for converting 
+		Used in conjunction with attack_table_WADI.pdf, converts the text in "Starting Time"/"Ending Time"
+		into a formatted turple.
+		e.g. "9/10/17 19:25:00" --> ("9/10/2017", "7:25:00PM")
 
 		Returns (date, time, am or pm)
 		"""
@@ -81,9 +83,16 @@ class Task5:
 
 	def extractDatapoints(self, input_dir, output_dir, startTime, endTime):
 		"""
-		UPDATED: 1/4/19
+		Retrieve datapoints that are within startTime and endTime (copied directly from "Starting Time" and 
+		"Ending Time" in attack_table_WADI.pdf). Extract these datapoints from input_dir and write them into
+		output_dir.
+
+		:input_dir: String representing the directory of the input file
+		:output_dir: String representing the directory of the output file
+		:startTime: Datapoints after this time will be extracted
+		:endTime: Datapoints after this will not be extracted
+
 		"""
-		# process time
 
 		startTime = self.convertString(startTime)  # (date, time, am or pm)
 		endTime = self.convertString(endTime)  # (date, time, am or pm)
@@ -137,89 +146,17 @@ class Task5:
 		print("Done. {0} rows added".format(counter2))
 
 
-	def splitData(self, input_dir, output_dir, variables, interval, proportion=1.0):
-		"""
-		UPDATED: 1/4/19
-
-		- var: a list that contains string representations of sensor data names that we want to retain
-		- interval: integer interval between datapoints
-		- ouputDIR: string DIR of output
-		"""
-		counter0 = 0
-		counter1 = 0
-		counter2 = 0  # number of rows added
-		totalRow = 0  # total number of rows in datapoints
-		startRow = 0  # row to start writing data
-		prevVal = 0
-		indexList = {}
-		currentRow = []
-
-
-		# count total rows
-		with open(input_dir) as csvfile0:
-			spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
-
-			for row in spamreader:
-				totalRow += 1
-
-			startRow = totalRow - (totalRow*proportion)
-
-
-		with open(input_dir) as csvfile0:
-			with open(output_dir, "w+") as csvfile1:
-				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
-				spamwriter = csv.writer(csvfile1, delimiter=" ", quotechar="|")
-
-				for row in spamreader:
-					if counter0 == 0:
-						counter2 += 1
-
-						for i in range(len(row)):
-							for j in variables:
-								if j in row[i]:
-									indexList[j] = i
-									counter1 += 1
-
-						if counter1 != len(variables):
-							print("ERROR: Retrieving column index from .csv file. \nNumber of variables provided: {0}; Number of variables found: {1}".format(len(variables), counter1))
-							break
-
-						# ensure that first row is added in the same column order as subsequent rows 
-						for i in variables:
-							currentRow.append(row[indexList[i]])
-
-						spamwriter.writerow(currentRow)
-						currentRow.clear()
-
-					elif counter0 - prevVal >= interval and counter0 >= startRow:
-						for i in variables:
-							currentRow.append(row[indexList[i]])
-
-						prevVal = counter0
-						counter2 += 1
-
-						# print("Reading row {0}; writing: {1}".format(counter0, currentRow))
-						spamwriter.writerow(currentRow)
-						currentRow.clear()
-
-					counter0 += 1
-					print("counter0: {0}, counter0-prevVal: {1}, startRow: {2}".format(counter0,counter0-prevVal, startRow))
-
-				print("Done. Total read rows: {0}; Total written rows: {1}; Proportion: {2}".format(counter0, counter2, proportion))
-				print(variables)
-
-
 	def calStats(self, input_dir, variables, proportion=1.0):
 		"""
-		UPDATED: 1/4/19
+		Returns a dictionary where each key is the name of the sensor/motor, and each corresponding value is
+		[mean, standard deviation, max value, min value]
 
-		Calculate mean and std dev for each variable
+		:input_dir: String representing the directory of the input file
+		:variables: a list of names of sensors/motors that we'll be calculating values from.
+		:proportion: proportion of datapoints that will be used to calculate the statistics. We'll be using the
+			first portion of the data points for calculation. E.g. if proportion==0.6, the first 60% of the 
+			datapoints are used to calculate the variable's mean and standard deviation.
 
-		proportion: proportion of datapoints that will be used to calculate the statistics. We'll be using the
-		first portion of the data points for calculation.
-
-		Documentation of output
-		{"Sensor_Name":[sensor_mean_value, sensor_variance_valuee]}
 		"""
 		counter0 = 0
 		counter1 = 0
@@ -306,9 +243,11 @@ class Task5:
 
 	def createIndexList(self, row, variables):
 		"""
-		Returns indexList for all functions.
-		:param row: first row of csvfile
-		:param variables: variables to retrieve index from
+		Returns indexList for all functions. indexList is a dictionary where the key is the name of the 
+		sensor/motor, and the value is its index within the row.
+
+		:row: first row of csvfile
+		:variables: variables to retrieve index from
 		"""
 		counter0 = 0
 		indexList = {}
@@ -325,44 +264,14 @@ class Task5:
 		return indexList
 
 
-	def ResultReader(self, input_dir):
+	def returnList(self, input_dir, output_dir):
 		"""
-		Reads csv file of all results, prints out number of datapoints that follow/dont follow
-		"""
-		counter0 = 0
-		counter1 = 0  # for filling up index list
-		counter2 = 0  # for counting number of datapoints that read "1"
-		indexList = {}
-		variables = ["Date", "Time", "Output"]
+		returnList writes a row of "1"s (if datapoint follows logical expression) and "0"s (if datapoint does
+		not follow logical expression), and a row of date and time corresponding to the datapoint (in the 
+		previous row) that share the same index.
 
-
-		with open(input_dir) as csvfile0:
-			spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
-
-			for row in spamreader:
-				if counter0 == 0:
-					for j in variables:
-						for i in range(len(row)):
-							if j in row[i]:
-								indexList[j] = i
-								counter1 += 1
-					if counter1 != len(variables):
-						print("ERROR: Retrieving column index from .csv file, counter1: {0}; len(variables): {1}".format(counter1, len(variables)))
-						break
-				else:
-					if row[indexList["Output"]] == "1":
-						counter2 += 1
-
-				counter0 += 1
-
-			print("ResultReader: Number of datapoints that follow logical expression: {0}, Ratio: {1}".format(counter2, counter2/counter0))
-
-
-	def returnList1(self, input_dir, output_dir):
-		"""
-		Used as an alternative to returnList. returnList1 assumes that no squashing is involved (data 
-		is directly added to the list) and also appends time and date to output for plotting of graph.
-		To completely replace returnList once we have confidence that no squashing will ever be required.
+		:input_dir: String representing the directory of the input file
+		:output_dir: String representing the directory of the output file
 		"""
 		variables = ["Date", "Time", "Output"]
 		indexList = {}
@@ -391,93 +300,17 @@ class Task5:
 				spamwriter.writerow(output_timedate)
 
 
-	def returnList(self, input_dir, output_dir, compress_length=None):
-			"""
-			UPDATED: 3/4/19
-			
-			Reads csv and express it in ~1000 datapoints, each element ranging 0 to 1 depending on (number of datapoints with value "True")/(number of datapoints per bucket) 
-
-			Takes buckets of size (file_length/compress_length) each bucket represents a float (number of "True"/bucket size)
-			Graph is plot with value (between 0 to 1) in y-axis, and time in x-axis
-			"""
-			variables = ["Date", "Time", "Output"]
-			indexList = {}
-			output = []
-			startDataPoint = 1  # inclusive of this point
-			file_length = 0  # number of datapoints in a file
-			counter0 = 0
-			counter1 = 0  # count number of datapoints in the bucket
-			counter2 = 0  # count number of true datapoints in a bucket
-			bucketSize = None  # rounded down (excess datapoints at the back will be cut off)
-			numberOfBuckets = None  # expected to be at most 1000 otherwise slightly smaller (cos bucketSize is rounded down)
-
-			testCounter = 0
-
-			# instantiate file_length, assuming all files have same number of datapoints
-			with open(input_dir) as csvfile0:
-				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
-
-				for row in spamreader:
-					file_length += 1
-
-			if compress_length == None:
-				bucketSize = 1
-				numberOfBuckets = file_length
-			else:
-				bucketSize = int(file_length/compress_length)
-				# numberOfBuckets = file_length//bucketSize
-				numberOfBuckets = compress_length  # note that ^^ the numberOfBuckets initially turned out to be more than compress_length, so expect some inaccuracies from the missing datapoints
-
-			with open(input_dir) as csvfile0:
-				spamreader = csv.reader(csvfile0, delimiter=" ", quotechar="|")
-
-				for row in spamreader:
-					if counter0 == 0:
-						indexList = self.createIndexList(row, variables)
-
-					# if datapoint is still within bucket
-					elif counter0 - startDataPoint < bucketSize:
-						if row[indexList["Output"]] == "1":
-							counter1 += 1
-
-					# once datapoint exceeds bucket
-					else:
-						# check if we've filled total number of buckets, if so end code
-						if len(output) == numberOfBuckets:
-							break
-
-						# if not
-						startDataPoint = counter0  # update startDataPoint
-						output.append(counter1/bucketSize)  # append float ratio into output
-						counter2 += counter1/bucketSize
-
-						# print number of 'slopes' in the graph - indication that graph value changed from '0' to '1' or vice versa
-						if counter1/bucketSize > 0 and counter1/bucketSize < 1:
-							testCounter += 1 
-						
-						# reset counter1 to 1 or 0 depending on value of current datapoint
-						if row[indexList["Output"]] == "1":
-							counter1 = 1
-						else:
-							counter1 = 0
-
-					counter0 += 1
-
-			# write output into output_dir as one row
-			with open(output_dir, "w+") as csvfile1:
-				spamwriter = csv.writer(csvfile1, delimiter=" ", quotechar="|")
-
-				spamwriter.writerow(output)
-
-			print("ReturnList (squashed list): Ratio of (number of True)/(total number of datapoints): {0}; length of output list: {1}".format(counter2/counter0, len(output)))
-			print("testCounter: {0}".format(testCounter))
-
-
 	def FR1stateCreation(self, input_dir, output_dir, statsDict, numberStdDev=2):
 		"""
-		UPDATED: 8/5/19
+		Assign the column values of each datapoint to state 1, 2, and 3 depending on the upper and lower 
+		bounds of each column values.
 
-		state of pump1 to ER == state of water level of ER == state of sum of % "open-ness" of consumer tank inlets
+		:input_dir: String representing the directory of the input file
+		:output_dir: String representing the directory of the output file
+		:statsDict: The dictionary output of the function calStats()
+		:numberStdDev: The number of standard deviations from the mean which represents the upper and 
+			lower bounds. Values above the upper bound, below the lower bound, and in between, make up
+			the three possible states a datapoint will have.
 
 		"""
 		counter0 = 0
@@ -536,13 +369,14 @@ class Task5:
 
 	def FR1ExpressionVerify(self, input_dir, output_dir):
 		"""
-		UPDATED: 1/4/19		
+		Assigns value of "1" if logical expression is not violated, "0" otherwise.
 
+		:input_dir: String representing the directory of the input file
+		:output_dir: String representing the directory of the output file
 
-		Note about datapoints written to DIRFR8RESULT:
-		1 means an attack is not happening
-		0 mean an attack is happening
-
+		Logical Expression:
+		state of pump1 to ER == state of water level of ER == state of sum of "open-ness" (expressed in percentage) 
+		of consumer tank inlets
 		"""
 		counter0 = 0
 		counter1 = 0
@@ -591,10 +425,15 @@ class Task5:
 
 	def FR8stateCreation(self, input_dir, output_dir, statsDict, numberStdDev=2):
 		"""
-		UPDATED: 8/5/19
+		Assign the column values of each datapoint to state 1, 2, and 3 depending on the upper and lower 
+		bounds of each column values.
 
-
-		state of water level of ER == state of gravity meter water flow == state of sum of % of "open-ness" of consumer tank inlets
+		:input_dir: String representing the directory of the input file
+		:output_dir: String representing the directory of the output file
+		:statsDict: The dictionary output of the function calStats()
+		:numberStdDev: The number of standard deviations from the mean which represents the upper and 
+			lower bounds. Values above the upper bound, below the lower bound, and in between, make up
+			the three possible states a datapoint will have.
 
 		"""
 		waterLevelLimit = None;  # a threshold. water level above 
@@ -654,19 +493,12 @@ class Task5:
 
 	def FR8ExpressionVerify(self, input_dir, output_dir):
 		"""
-		UPDATED: 1/4/19
-		Will be verifying multiple logical expressions.
-		
-		DP8(Number of opened input valves > 0) == DP8(Number of opened input valves > 0) AND DP1(Water level of ER tank decreases) AND DP6(Total  consumption flow rate increases)
+		Assigns value of "1" if logical expression is not violated, "0" otherwise.
 
-		Result:
-		Clean - Number of datapoints that follow expression: 1082479, Ratio: 0.8949051010166981
-		Dirty - Number of datapoints that follow expression: 0, Ratio: 0.0
+		:input_dir: String representing the directory of the input file
+		:output_dir: String representing the directory of the output file
 
-		Note about datapoints written to DIRFR8RESULT:
-		1 means an attack is not happening
-		0 mean an attack is happening
-
+		state of water level of ER == state of gravity meter water flow == state of sum of % of "open-ness" of consumer tank inlets
 		"""
 		counter0 = 0
 		counter1 = 0
@@ -715,15 +547,10 @@ class Task5:
 
 	def GraphCreateResult(self, input_dir, output_dir):
 		"""
-		UPDATED: 1/4/19
-		Returns csv file, where each datapoint indicates True under "Output" when an attack is happening, False otherwise
+		Returns csv file, where each datapoint indicates "1" under "Output" when an attack is happening, "0" otherwise
 
-		1 means True means attack is happening
-		0 means False means attack is not happening
-
-		Tests done:
-		- Tested that there are 32 instances where datapoint is start/end point
-		- Visually test that list values are 1 or 0
+		:input_dir: String representing the directory of the input file
+		:output_dir: String representing the directory of the output file
 
 		"""
 		counter0 = 0
@@ -801,10 +628,10 @@ class Task5:
 
 	def TotalTest(self, dirty_data_dir, fr_result_dir):
 		"""
-		UPDATED: 3/4/19
 		Checks that all csv files contain same number of datapoints, returns True if this test passes, False otherwise
-		:param dirty_data_dir: String of dir of DIRGRAPHRESULT
-		:param fr_result_dir: a dictionary that contains {name of FR:string value of dir of result}. All csv files are expected to have same number of datapoints
+		
+		:dirty_data_dir: String of dir of DIRGRAPHRESULT
+		:fr_result_dir: a dictionary that contains {name of FR:string value of dir of result}. All csv files are expected to have same number of datapoints
 		"""
 		counterList = []
 		dir_list = [dirty_data_dir]
@@ -845,10 +672,14 @@ class Task5:
 	def TotalStats(self, dirty_data_dir, fr_result_dir, testPass, testOrder, FRrelation):
 		"""
 		Counts number of False positive, True positive, False negative, True negative
-		DEFINE ATTACK AS POSITIVE
+		Attack is defined as positive.
 
-		QuickFix: Added preVal, testOrderCounter, testOrder, and FRrelation to only record data points if they affect the FR
-
+		:dirty_data_dir: directory of the dirty data after formatted by the function returnList()
+		:fr_result_dir: directory where key is name of FR, and value is the output of the FR from the 
+			returnList() function
+		:testPass: output from the function TotalTest()
+		:testOrder: A list of FRs representing the FRs attacked as detailed by attack_table_WADI.pdf (in order)
+		:FRrelation: How each FR is related to other FRs in accordance to the axiomatic matrix of the FRs
 
 		Note:
 		dirty data is 1 when there is an attack, 0 when there is not
@@ -927,13 +758,8 @@ class Task5:
 
 	def TotalGraphRead(self, dirty_data_dir, fr_result_dir, testPass):
 		"""
-		UPDATED: 3/4/19
-		Decisions:
-		- Did not display date time in axis; takes too long to process and zoom in/out, referring to csv file and tallying index of datapoint to 
-		row number is way faster
+		Expresses DIRGRAPHRESULT, as well as results of all FRs as a graph
 
-
-		Expresses DIRGRAPHRESULT, as well as results of all FRs as a graph normalised to 1000 points
 		:param dirty_data_dir: String of dir of DIRGRAPHRESULT
 		:param fr_result_dir: a dictionary that contains {name of FR:string value of dir of result}. All csv files are expected to have same number of datapoints
 		:param testPass: Output of GraphTest, Boolean True if test passes, Boolean False otherwise
@@ -973,136 +799,11 @@ class Task5:
 		plt.show()
 
 
-	def ShowDetail(self, testPass, dirty_data_dir, fr_result_dir, write_result_dir):
-		"""
-		
-		"""
-		counter0 = 0  # count total number of rows in any one of the files
-		counter1 = 0  # index of file iterations
-
-		if not testPass:
-			print("TotalTest did not pass")
-			return
-
-		# assign value to counter0
-		with open(dirty_data_dir) as csvfile0:
-			spamreader0 = csv.reader(csvfile0, delimiter=" ", quotechar="|")
-			for row in spamreader0:
-				counter0 += 1
-
-
-		# fill up dataPointRecord with key:value pairs where key=name of DR/dirty data; value=list of float elements
-		# for i in fr_result_dir.keys():
-		with open(dirty_data_dir) as csvfile0:
-			with open(fr_result_dir) as csvfile1:
-				with open(write_result_dir, "w+") as csvfile2:
-					spamreader0 = csv.reader(csvfile0, delimiter=" ", quotechar="|")
-					spamreader1 = csv.reader(csvfile1, delimiter=" ", quotechar="|")
-					spamwriter0 = csv.writer(csvfile2, delimiter=" ", quotechar="|")
-
-					while (counter1 < counter0):
-						counter1 += 1
-						row0 = spamreader0.__next__()
-						row1 = spamreader1.__next__()
-
-						if row0[2] == row1[2]:
-							spamwriter0.writerow(row1)
-							print(row1)
-
-
-
-
-		
-
-
-		
-
-
-
-
-
-
-
-
-
-
 
 
 DIRPROCESSEDWADI = "./data/processed_clean/processedWadi.csv"
 DIRDIRTYPROCESSEDWADI = "./data/processed_dirty/WADI_attackdata_October.csv"
 
-# --- PHASE ONE ---
-"""
-Squashing entire dataset into 1000 datapoints
-"""
-# SQUASHED_VALUE = 1000
-# DIRFR1DATATIMESPLIT = "./data/misc/phase1FR1dataTimeSplit.csv"
-# DIRFR1SPLIT = "./data/misc/phase1FR1SplitData.csv"
-# DIRFR1STATESWADI = "./data/misc/phase1FR1States.csv"
-# DIRFR1RESULT = "./data/misc/phase1FR1Result.csv"
-# DIRFR1RESULTSQUASHED = "./data/misc/phase1FR1ResultSquashed.csv"
-
-# DIRFR8DATATIMESPLIT = "./data/misc/phase1FR8dataTimeSplit.csv"
-# DIRFR8SPLIT = "./data/misc/phase1FR8SplitData.csv"
-# DIRFR8STATESWADI = "./data/misc/phase1FR8States.csv"
-# DIRFR8RESULT = "./data/misc/phase1FR8Result.csv"
-# DIRFR8RESULTSQUASHED = "./data/misc/phase1FR8ResultSQUASHED.csv"
-
-# DIRGRAPHRESULT = "./data/misc/phase1GraphResult.csv"  # for dirty data
-# DIRGRAPHRESULTSQUASHED = "./data/misc/phase1GraphResultSquashed.csv"
-
-# ATTACKTIMING = [["9/10/17 19:25:00", "9/10/17 19:50:16"],
-# 				["10/10/17 10:24:10", "10/10/17 10:34:00"],
-# 				["10/10/17 10:55:00", "10/10/17 11:24:00"],
-# 				["10/10/17 11:30:40", "10/10/17 11:44:50"],
-# 				["10/10/17 13:39:30", "10/10/17 13:50:40"],
-# 				["10/10/17 14:48:17", "10/10/17 14:59:55"],
-# 				["10/10/17 17:40:00", "10/10/17 17:49:40"],
-# 				["10/10/17 10:55:00", "10/10/17 10:56:27"],
-# 				["11/10/17 11:17:54", "11/10/17 11:31:20"],
-# 				["11/10/17 11:36:31", "11/10/17 11:47:00"],
-# 				["11/10/17 11:59:00", "11/10/17 12:05:00"],
-# 				["11/10/17 12:07:30", "11/10/17 12:10:52"],
-# 				["11/10/17 12:16:00", "11/10/17 12:25:36"],
-# 				["11/10/17 15:26:30", "11/10/17 15:37:00"],]
-
-
-
-# # for testing FR1
-# proportionForTraining = 0.6
-# proportionForTesting = 1
-# Task5().extractDatapoints(DIRDIRTYPROCESSEDWADI, DIRFR1DATATIMESPLIT, "10/10/17 11:30:40", "10/10/17 11:44:50")
-# stats = Task5().calStats(DIRPROCESSEDWADI, ["1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
-# Task5().splitData(DIRDIRTYPROCESSEDWADI, DIRFR1SPLIT, ["Date", "Time", "1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, proportion=proportionForTesting)
-# Task5().FR1stateCreation(DIRFR1SPLIT, DIRFR1STATESWADI, stats)
-# Task5().FR1ExpressionVerify(DIRFR1STATESWADI, DIRFR1RESULT)
-# Task5().returnList(DIRFR1RESULT, DIRFR1RESULTSQUASHED, SQUASHED_VALUE)  # create squashed results and produce ratio
-
-
-# # for testing FR8
-# proportionForTraining = 0.6
-# proportionForTesting = 1
-# Task5().extractDatapoints(DIRDIRTYPROCESSEDWADI, DIRFR8DATATIMESPLIT, "10/10/17 11:30:40", "10/10/17 11:44:50")
-# stats = Task5().calStats(DIRPROCESSEDWADI, ["2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
-# Task5().splitData(DIRDIRTYPROCESSEDWADI, DIRFR8SPLIT, ["Date", "Time", "2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, proportion=proportionForTesting)
-# Task5().FR8stateCreation(DIRFR8SPLIT, DIRFR8STATESWADI, stats)
-# Task5().FR8ExpressionVerify(DIRFR8STATESWADI, DIRFR8RESULT) 
-# Task5().returnList(DIRFR8RESULT, DIRFR8RESULTSQUASHED, SQUASHED_VALUE)  # create squashed results and produce ratio
-
-# # for dirty data
-# Task5().GraphCreateResult(DIRDIRTYPROCESSEDWADI, DIRGRAPHRESULT)  # create true/false results for dirty data
-# Task5().returnList(DIRGRAPHRESULT, DIRGRAPHRESULTSQUASHED, SQUASHED_VALUE)
-# Task5().ResultReader(DIRGRAPHRESULT)  # produce ratio for original data
-
-# # To show graph
-# fr_result_dir = {"FR8":DIRFR8RESULTSQUASHED}
-# testResult = Task5().TotalTest(DIRGRAPHRESULTSQUASHED, fr_result_dir)
-# Task5().TotalRead(DIRGRAPHRESULTSQUASHED, fr_result_dir, True)
-
-
-
-
-# --- PHASE TWO ---
 """
 Slicing out attack data on attack identifier 12-15 inclusive
 """
@@ -1130,7 +831,7 @@ ATTACKTIMING = [["11/10/17 11:59:01", "11/10/17 12:05:00"],
 				["11/10/17 12:16:00", "11/10/17 12:25:36"],
 				["11/10/17 15:26:30", "11/10/17 15:36:59"],]  # first attack is shifted to one second later, and last attack is shifted to one second earlier
 
-ATTACKORDER = ["FR8", "FR7", "None", "FR2"]  # quick fix to label attacks
+ATTACKORDER = ["FR8", "FR7", "None", "FR2"]
 FRRELATION = {"FR1":["FR1", "FR2", "FR8"], "FR2":["FR1", "FR2"], "FR3":["FR3"], "FR6":["FR6", "FR7", "FR8"], "FR7":["FR7", "FR8"], "FR8":["FR1", "FR6", "FR8"]}
 
 # # for dirty graph
@@ -1141,21 +842,19 @@ proportionForTesting = 1
 
 # # for testing FR1
 # stats = Task5().calStats(DIRPROCESSEDWADI, ["1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
-# Task5().splitData(DIRGRAPHSLICED, DIRFR1SPLIT, ["Date", "Time", "1_P_005", "2_LT_002_PV", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, proportion=proportionForTesting)
 # Task5().FR1stateCreation(DIRFR1SPLIT, DIRFR1STATESWADI, stats, 2)
 # Task5().FR1ExpressionVerify(DIRFR1STATESWADI, DIRFR1RESULT)
-# Task5().returnList1(DIRFR1RESULT, DIRFR1RESULTUNSQUASHED)
+# Task5().returnList(DIRFR1RESULT, DIRFR1RESULTUNSQUASHED)
 
 # # for testing FR8
-stats = Task5().calStats(DIRPROCESSEDWADI, ["2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
-# Task5().splitData(DIRGRAPHSLICED, DIRFR8SPLIT, ["Date", "Time", "2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], 1, proportion=proportionForTesting)
+# stats = Task5().calStats(DIRPROCESSEDWADI, ["2_LT_002_PV", "2_FIT_002", "2_FIT_003", "2_MCV_101", "2_MCV_201", "2_MCV_301", "2_MCV_401", "2_MCV_501", "2_MCV_601"], proportion=proportionForTraining)
 # Task5().FR8stateCreation(DIRFR8SPLIT, DIRFR8STATESWADI, stats, 2)
 # Task5().FR8ExpressionVerify(DIRFR8STATESWADI, DIRFR8RESULT)
-# Task5().returnList1(DIRFR8RESULT, DIRFR8RESULTUNSQUASHED)
+# Task5().returnList(DIRFR8RESULT, DIRFR8RESULTUNSQUASHED)
 
 # # for processing dirty data
 # Task5().GraphCreateResult(DIRGRAPHSLICED, DIRGRAPHRESULT)  # create true/false results for dirty data
-# Task5().returnList1(DIRGRAPHRESULT, DIRGRAPHRESULTUNSQUASHED)
+# Task5().returnList(DIRGRAPHRESULT, DIRGRAPHRESULTUNSQUASHED)
 
 # # To show graph
 # fr_result_dir = {"FR8":DIRFR8RESULTUNSQUASHED}
@@ -1163,7 +862,3 @@ stats = Task5().calStats(DIRPROCESSEDWADI, ["2_LT_002_PV", "2_FIT_002", "2_FIT_0
 # Task5().TotalGraphRead(DIRGRAPHRESULTUNSQUASHED, fr_result_dir, testResult)
 
 # Task5().TotalStats(DIRGRAPHRESULTUNSQUASHED, fr_result_dir, testResult, ATTACKORDER, FRRELATION)  # To show stats
-
-# To show details
-# Task5().ShowDetail(True, DIRGRAPHRESULT, DIRFR8RESULT, DIRFR8DETAILWRONG)
-
